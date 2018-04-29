@@ -1,2 +1,4 @@
 # ignore all class
 **/*.class
+**/target/*
+/.project
