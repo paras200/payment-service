@@ -31,6 +31,14 @@ public class PaytmConfig {
 	public final static String RESPCODE= "RESPCODE";
 	public final static String RESPMSG= "RESPMSG";
 	public final static String BANKTXNID= "BANKTXNID";
+	public final static String RESP_ORDERID= "ORDERID";
+	public final static String TXNID= "TXNID";
+	public final static String TXNDATE= "TXNDATE";
+	public final static String TXN_TYPE= "TXNTYPE";
+	public final static String GATEWAYNAME= "GATEWAYNAME";
+	public final static String BANKNAME= "BANKNAME";
+	public final static String PAYMENTMODE= "PAYMENTMODE";
+	public final static String REFUNDAMT= "REFUNDAMT";
 	
 	
 	

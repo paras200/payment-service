@@ -7,13 +7,17 @@ import com.coinxlab.payment.model.TxDetails;
 
 public class TxCache {
 
-	private Map<String, TxDetails> txCache = new ConcurrentHashMap<>();
+	private  Map<String, TxDetails> txCache = new ConcurrentHashMap<>();
 	
+	private static TxCache tx ; ;
 	private TxCache(){
 		
 	}
 	public static synchronized TxCache  getInstance() {
-		return new TxCache();
+		if(tx == null){
+			tx = new TxCache();
+		}
+		return tx;
 	}
 	
 	public void add(TxDetails txDetails){

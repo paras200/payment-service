@@ -60,4 +60,10 @@ public class AccountDetails {
 		this.amount = this.getAmount() - amoutToSubtract;
 		return this.amount;
 	}
+	@Override
+	public String toString() {
+		return "AccountDetails [id=" + id + ", userId=" + userId + ", email=" + email + ", amount=" + amount
+				+ ", lastTxId=" + lastTxId + "]";
+	}
+	
 }

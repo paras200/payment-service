@@ -1,5 +1,8 @@
 package com.coinxlab.payment.model;
 
+import java.util.Calendar;
+import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -23,6 +26,9 @@ public class PaymentDetails {
 	private String paymentSystem;
 	private String payReference;
 	private String txType;
+	private String enrolId;
+	private Date date = Calendar.getInstance().getTime();
+	private String description;
 	
 	public Integer getId() {
 		return id;
@@ -76,12 +82,26 @@ public class PaymentDetails {
 	public void setTxType(String txType) {
 		this.txType = txType;
 	}
+	
+	public Date getDate() {
+		return date;
+	}
+	public void setDate(Date date) {
+		this.date = date;
+	}
+	
+	public String getEnrolId() {
+		return enrolId;
+	}
+	public void setEnrolId(String enrolId) {
+		this.enrolId = enrolId;
+	}
+	
 	@Override
 	public String toString() {
 		return "PaymentDetails [id=" + id + ", sourceUserId=" + sourceUserId + ", sourceUserEmail=" + sourceUserEmail
 				+ ", destUserId=" + destUserId + ", destUserEmail=" + destUserEmail + ", amount=" + amount
-				+ ", paymentSystem=" + paymentSystem + ", payReference=" + payReference + "]";
-	}
-
-	
+				+ ", paymentSystem=" + paymentSystem + ", payReference=" + payReference + ", txType=" + txType
+				+ ", date=" + date + "]";
+	}	
 }

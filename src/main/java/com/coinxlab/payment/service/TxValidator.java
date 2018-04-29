@@ -4,12 +4,17 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.TxDetails;
 import com.coinxlab.payment.repos.TransactionRepository;
 
 public class TxValidator extends Thread {
 
+	private static Log log = LogFactory.getLog(TxValidator.class.getName());
+	
 	private BlockingQueue<TxDetails> queue;
 	//private PaytmProcessor paytmProcessor;
 	private TransactionRepository transactionRepository;
@@ -25,6 +30,7 @@ public class TxValidator extends Thread {
 			TxDetails origTx =null;
 			try {
 				TxDetails txData = queue.take();
+				log.info("validation started for Tx : " + txData);
 				origTx = txData; 
 				List<TxDetails> origTxList = transactionRepository.findByOrderId(txData.getOrderId());
 				if(origTxList.size() == 1){
@@ -38,7 +44,7 @@ public class TxValidator extends Thread {
 					origTx.setStatus(txData.getStatus());	
 					origTx.setTxAmount(txData.getTxAmount());
 				}else{
-					System.err.println("Error in processing the transaction record, number of records found with the order id :" + txData.getOrderId()+ "  : is : " +origTxList.size());
+					log.error("Error in processing the transaction record, number of records found with the order id :" + txData.getOrderId()+ "  : is : " +origTxList.size());
 					origTx.setStatus("Internal Error");
 					origTx.setResult("Error in processing the transaction record, number of records found with the order id :" + txData.getOrderId()+ "  : is : " +origTxList.size());
 				}
@@ -56,10 +62,10 @@ public class TxValidator extends Thread {
 			} catch (InterruptedException e) {				
 				e.printStackTrace();
 			} catch (NumberFormatException e) {
-				System.err.println("error updating deposit for the oder id: " + origTx.getOrderId());
+				log.error("error updating deposit for the oder id: " + origTx.getOrderId());
 				e.printStackTrace();
 			} catch (PaymentException e) {
-				System.err.println("error updating deposit for the oder id: " + origTx.getOrderId());
+				log.error("error updating deposit for the oder id: " + origTx.getOrderId());
 				e.printStackTrace();
 			}
 		}

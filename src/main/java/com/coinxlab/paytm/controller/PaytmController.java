@@ -11,8 +11,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,12 +26,16 @@ import com.coinxlab.payment.model.TxDetails;
 import com.coinxlab.payment.repos.TransactionRepository;
 import com.coinxlab.payment.service.PaymentProcessor;
 import com.coinxlab.payment.service.TxCache;
+import com.coinxlab.payment.utils.AppUtils;
 import com.coinxlab.paytm.PaytmConfig;
 import com.coinxlab.paytm.service.PaytmProcessor;
 
 @Controller
+@CrossOrigin(origins = "*")
 @RequestMapping(path="/paytm")
 public class PaytmController {
+	
+	private static Log log = LogFactory.getLog(PaytmController.class.getName());
 	
 	@Autowired
 	private PaytmProcessor paytmProcessor;
@@ -39,7 +46,7 @@ public class PaytmController {
 	@Autowired
 	private TransactionRepository txRepos;
 	
-	@PostMapping(path="/generateChecksum")
+	@PostMapping(path="/generate-cksum")
 	public @ResponseBody String generateChecksum( HttpServletRequest request, HttpServletResponse response ) throws PaymentException{
 		Enumeration<String> paramNames = request.getParameterNames();
 		Map<String, String[]> mapData = request.getParameterMap();
@@ -50,7 +57,7 @@ public class PaytmController {
 			parameters.put(paramName,mapData.get(paramName)[0]);
 		}
 			
-		System.out.println("input parameters : " + parameters);
+		log.info("method : generate-cksum : input parameters : " + parameters);
 		 String cksum;
 		 try {
 			 cksum = paytmProcessor.generateChecksum(parameters);			 
@@ -65,11 +72,13 @@ public class PaytmController {
 		 tx.setCustId(parameters.get(PaytmConfig.CUST_ID));
 		 tx.setMobile(parameters.get(PaytmConfig.MOBILE));
 		 tx.setOrderId(parameters.get(PaytmConfig.ORDER_ID));
-		 tx.setTxAmount(parameters.get(PaytmConfig.TXN_AMOUNT));
+		 tx.setTxAmount(AppUtils.convertToDouble(parameters.get(PaytmConfig.TXN_AMOUNT)));
 		 tx.setStatus(PaytmConfig.TX_STATUS_NEW);
 		 txRepos.save(tx);
 		 		
-		 return cksum;
+		 String result ="{\"cksum\": \""+cksum+"\"}";
+		 log.info("gen-cksum response : " + result);
+		 return result;
 	}
 	// not in use
 	@PostMapping(path="/getChecksum")
@@ -95,7 +104,7 @@ public class PaytmController {
 		 tx.setCustId(custId);
 		 tx.setMobile(mobile);
 		 tx.setOrderId(orderId);
-		 tx.setTxAmount(txAmt);
+		 tx.setTxAmount(AppUtils.convertToDouble(txAmt));
 		 tx.setStatus(PaytmConfig.TX_STATUS_NEW);
 		 txRepos.save(tx);
 		 
@@ -137,12 +146,22 @@ public class PaytmController {
 				parameters.put(paramName,mapData.get(paramName)[0]);
 			}
 		}
+		log.info("call back received from Paytm with parameters : " + parameters);
 		TxDetails txDetails = new TxDetails();
+		
+		txDetails.setOrderId(parameters.get(PaytmConfig.RESP_ORDERID));
 		txDetails.setBanktxId(parameters.get(PaytmConfig.BANKTXNID));
 		txDetails.setCcy(parameters.get(PaytmConfig.CURRENCY));
-		txDetails.setCksumResponse(parameters.get(PaytmConfig.CHECKSUMHASH));
+		txDetails.setCksumResponse(paytmChecksum);
 		txDetails.setRespcode(parameters.get(PaytmConfig.RESPCODE));
-		txDetails.setRespmsg(parameters.get(PaytmConfig.RESPMSG));	
+		txDetails.setRespmsg(parameters.get(PaytmConfig.RESPMSG));
+		txDetails.setBankName(parameters.get(PaytmConfig.BANKNAME));
+		txDetails.setGatewayName(parameters.get(PaytmConfig.GATEWAYNAME));
+		txDetails.setPaymentMode(parameters.get(PaytmConfig.PAYMENTMODE));
+		txDetails.setRefundAmt(AppUtils.convertToDouble(parameters.get(PaytmConfig.REFUNDAMT)));
+		txDetails.setTxnDate(parameters.get(PaytmConfig.TXNDATE));
+		txDetails.setTxnType(parameters.get(PaytmConfig.TXN_TYPE));
+		txDetails.setRespTxAmount(AppUtils.convertToDouble(parameters.get(PaytmConfig.TXNAMOUNT)));
 		
 		boolean isValideChecksum = false;
 		String result="";
@@ -158,6 +177,7 @@ public class PaytmController {
 				result="Checksum mismatched.";
 			}
 			txDetails.setResult(result);
+			log.info("call back is processed");
 		}catch(PaymentException e){
 			result = "Paytm reponse is not validated : " + e.getMessage();
 			throw new PaymentException("Paytm reponse can't get validated ... need attention ", e);
@@ -168,7 +188,7 @@ public class PaytmController {
 		return result;		
 	}
 	
-	@PostMapping(path="/verifyPayment")
+	@PostMapping(path="/verify-payment")
 	public @ResponseBody TxDetails verifyPayment(@RequestParam String orderId ){
 		 TxDetails tx =  TxCache.getInstance().get(orderId);
 		 if(tx == null){
@@ -186,6 +206,7 @@ public class PaytmController {
 			 tx.setStatus("ERROR");
 			 tx.setResult("Internal Error : we will review transaction recording and get back to you");
 		 }
+		 log.info("payment verification done : " + tx);
 		 return tx;
 	}
 }

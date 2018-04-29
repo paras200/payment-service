@@ -23,7 +23,7 @@ public class TxDetails {
 	
 	private String mobile;
 	private String email;
-	private String txAmount;
+	private Double txAmount;
 	private String cksumRequest;
 	private String ccy;
 	private String status;
@@ -34,7 +34,15 @@ public class TxDetails {
 	private Date createdAt = Calendar.getInstance().getTime(); ;
 	private Date lastUpdated ;
 	private long lastUpdatedTimeinMilli = Calendar.getInstance().getTimeInMillis();
-	private String result;
+	private String result;	
+	private String txnId;
+	private String txnType;
+	private String gatewayName;
+	private String bankName;
+	private String paymentMode;
+	private String txnDate;
+	private Double refundAmt;
+	private Double respTxAmount;
 	
 	public String getCustId() {
 		return custId;
@@ -60,10 +68,10 @@ public class TxDetails {
 	public void setEmail(String email) {
 		this.email = email;
 	}
-	public String getTxAmount() {
+	public Double getTxAmount() {
 		return txAmount;
 	}
-	public void setTxAmount(String txAmount) {
+	public void setTxAmount(Double txAmount) {
 		this.txAmount = txAmount;
 	}
 	public String getCksumRequest() {
@@ -138,16 +146,66 @@ public class TxDetails {
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
 	}
+		
+	public String getTxnId() {
+		return txnId;
+	}
+	public void setTxnId(String txnId) {
+		this.txnId = txnId;
+	}
+	public String getTxnType() {
+		return txnType;
+	}
+	public void setTxnType(String txnType) {
+		this.txnType = txnType;
+	}
+	public String getGatewayName() {
+		return gatewayName;
+	}
+	public void setGatewayName(String gatewayName) {
+		this.gatewayName = gatewayName;
+	}
+	public String getBankName() {
+		return bankName;
+	}
+	public void setBankName(String bankName) {
+		this.bankName = bankName;
+	}
+	public String getPaymentMode() {
+		return paymentMode;
+	}
+	public void setPaymentMode(String paymentMode) {
+		this.paymentMode = paymentMode;
+	}
+	public String getTxnDate() {
+		return txnDate;
+	}
+	public void setTxnDate(String txnDate) {
+		this.txnDate = txnDate;
+	}
+	public Double getRefundAmt() {
+		return refundAmt;
+	}
+	public void setRefundAmt(Double refundAmt) {
+		this.refundAmt = refundAmt;
+	}
+	
+	public Double getRespTxAmount() {
+		return respTxAmount;
+	}
+	public void setRespTxAmount(Double respTxAmount) {
+		this.respTxAmount = respTxAmount;
+	}
 	@Override
 	public String toString() {
 		return "TxDetails [id=" + id + ", custId=" + custId + ", orderId=" + orderId + ", mobile=" + mobile + ", email="
 				+ email + ", txAmount=" + txAmount + ", cksumRequest=" + cksumRequest + ", ccy=" + ccy + ", status="
 				+ status + ", respcode=" + respcode + ", respmsg=" + respmsg + ", banktxId=" + banktxId
 				+ ", cksumResponse=" + cksumResponse + ", createdAt=" + createdAt + ", lastUpdated=" + lastUpdated
-				+ ", lastUpdatedTimeinMilli=" + lastUpdatedTimeinMilli + ", result=" + result + "]";
+				+ ", lastUpdatedTimeinMilli=" + lastUpdatedTimeinMilli + ", result=" + result + ", txnId=" + txnId + ", txnType=" + txnType + ", gatewayName=" + gatewayName
+				+ ", bankName=" + bankName + ", paymentMode=" + paymentMode + ", txnDate=" + txnDate + ", refundAmt="
+				+ refundAmt + "]";
 	}
-	
-	
 	
 	
 }
