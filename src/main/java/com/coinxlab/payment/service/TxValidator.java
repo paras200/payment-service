@@ -60,13 +60,16 @@ public class TxValidator extends Thread {
 				
 				//TODO send email notification on error
 			} catch (InterruptedException e) {				
-				e.printStackTrace();
+				log.error("Thread iterrupted ", e);
 			} catch (NumberFormatException e) {
-				log.error("error updating deposit for the oder id: " + origTx.getOrderId());
+				log.error("error updating deposit for the oder id: " + origTx.getOrderId(),e);
 				e.printStackTrace();
 			} catch (PaymentException e) {
-				log.error("error updating deposit for the oder id: " + origTx.getOrderId());
+				log.error("error updating deposit for the oder id: " + origTx.getOrderId(), e);
 				e.printStackTrace();
+			}catch(Exception e){
+				log.error("This is catch all  to avoid thread getting killed ", e);
+				// TODO send email for attention 
 			}
 		}
 		
