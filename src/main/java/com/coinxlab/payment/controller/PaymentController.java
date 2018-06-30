@@ -1,5 +1,7 @@
 package com.coinxlab.payment.controller;
 
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.AccountDetails;
 import com.coinxlab.payment.model.PaymentDetails;
+import com.coinxlab.payment.model.RateCard;
 import com.coinxlab.payment.repos.PaymentRepository;
 import com.coinxlab.payment.service.PaymentProcessor;
 import com.coinxlab.payment.utils.TransactionType;
@@ -85,5 +88,11 @@ public class PaymentController {
 			log.error("key input are missing ... can't proceed with the transaction for : "+ pd);
 			throw new PaymentException("key input are missing ... can't proceed with the transaction");
 		}
+	}
+	
+	@GetMapping(path="/credit-rate-card")
+	public @ResponseBody List<RateCard> getRateList() {
+		// This returns a JSON or XML with the users
+		return RateCard.getRateList();
 	}
 }
