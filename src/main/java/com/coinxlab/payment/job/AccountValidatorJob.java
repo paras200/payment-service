@@ -16,7 +16,7 @@ public class AccountValidatorJob extends Thread {
 	private long timeinMilli;
 	public AccountValidatorJob (AccountValidator validator){
 		this.validator = validator;
-		this.timeinMilli = 6*60*60*1000; // 6 hours
+		this.timeinMilli = 6*60*60*1000; // 6 hours TODO read from config
 	}
 	
 	@Override
