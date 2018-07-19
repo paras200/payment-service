@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.coinxlab.paypal.config.PaypalPaymentIntent;
 import com.coinxlab.paypal.config.PaypalPaymentMethod;
+import com.coinxlab.paypal.model.ResponseData;
 import com.coinxlab.paypal.service.PaypalService;
 import com.coinxlab.paypal.util.URLUtils;
 import com.paypal.api.payments.Links;
@@ -38,7 +39,7 @@ public class PaypalController {
 	}
 	
 	@RequestMapping(method = RequestMethod.POST, value = "pay")
-	public String pay(HttpServletRequest request,@RequestParam Double amount ,@RequestParam String ccy ,@RequestParam String desc ){
+	public ResponseData pay(HttpServletRequest request,@RequestParam Double amount ,@RequestParam String ccy ,@RequestParam String desc ){
 		String cancelUrl = URLUtils.getBaseURl(request) + "/" + PAYPAL_CANCEL_URL;
 		String successUrl = URLUtils.getBaseURl(request) + "/" + PAYPAL_SUCCESS_URL;
 		try {
@@ -52,13 +53,14 @@ public class PaypalController {
 					successUrl);
 			for(Links links : payment.getLinks()){
 				if(links.getRel().equals("approval_url")){
-					return "redirect:" + links.getHref();
+					return new ResponseData(links.getHref());
+					//return "redirect:" + links.getHref();
 				}
 			}
 		} catch (PayPalRESTException e) {
 			log.error(e.getMessage());
 		}
-		return "redirect:/";
+		return new ResponseData("/");
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = PAYPAL_CANCEL_URL)

@@ -1,12 +1,11 @@
 package com.coinxlab.payment.controller;
 
-import java.util.List;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.coinxlab.common.Result;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.AccountDetails;
 import com.coinxlab.payment.model.PaymentDetails;
@@ -24,6 +24,7 @@ import com.coinxlab.payment.utils.TransactionType;
 
 
 @Controller
+@CrossOrigin(origins = "*")
 @RequestMapping(path="/account")
 public class PaymentController {
 	private static Log log = LogFactory.getLog(PaymentController.class.getName());
@@ -62,10 +63,10 @@ public class PaymentController {
 
 	
 	@PostMapping(path="/deposit") 
-	public synchronized @ResponseBody String deposit (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount) throws PaymentException {		
+	public synchronized @ResponseBody Result deposit (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount) throws PaymentException {		
 		paymentProcessor.deposit(userId, userEmail, amount);
 		log.info("deposit completed by userId : " + userId);
-		return "Saved";
+		return new Result("SUCCESS");
 	}
 	
 	@GetMapping(path="/accountBal")
@@ -76,10 +77,10 @@ public class PaymentController {
 	}
 	
 	@PostMapping(path="/withdraw") 
-	public synchronized @ResponseBody String withdraw (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount) throws PaymentException {		
+	public synchronized @ResponseBody Result withdraw (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount) throws PaymentException {		
 		paymentProcessor.withdraw(userId, userEmail, amount);
 		log.info("withdrawal completed by userId : " + userId);
-		return "Saved";
+		return new Result(Result.STATUS_SUCCESS);
 	}
 	
 
@@ -91,8 +92,8 @@ public class PaymentController {
 	}
 	
 	@GetMapping(path="/credit-rate-card")
-	public @ResponseBody List<RateCard> getRateList() {
-		// This returns a JSON or XML with the users
-		return RateCard.getRateList();
+	public @ResponseBody RateCard getRateList() {
+		// TODO get fxrate from yahoo finance and apply handling cost
+		return new RateCard();
 	}
 }
