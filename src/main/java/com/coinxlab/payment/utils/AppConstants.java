@@ -7,4 +7,5 @@ public interface AppConstants {
 	
 	public static String SYSTEM_EMAIL ="coinxlab@gmail.com"; 
 	public static String SYSTEM_ID ="coinxlab";
+	
 }

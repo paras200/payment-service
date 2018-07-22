@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.coinxlab.common.NumberUtil;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.AccountDetails;
 import com.coinxlab.payment.model.PaymentDetails;
@@ -52,9 +53,13 @@ public class PaymentProcessor {
 	public synchronized PaymentDetails addTransactions(PaymentDetails pd) throws PaymentException{
 		// validate account balance
 		AccountDetails ad = getAccountDeatils(pd.getSourceUserId());
-		if (ad.getAmount() < pd.getAmount()) {
-			throw new PaymentException("Account Balance is insufficient for user to make the transaction :" + pd);
+		if (ad.getAmount() < pd.getAmount() + pd.getTxCharge()) {
+			throw new PaymentException("Account Balance is insufficient for user to make the transaction , minimum balance requered is :" + NumberUtil.roundDouble(pd.getAmount() + pd.getTxCharge()) );
 		}
+
+		// spit transactions in 2 parts if txcharge > 0
+		// part 1- real amount transfer from source to destination			
+		// part 2- transaction charge amount transfer from source to system
 		
 		pd = paymentRepos.save(pd);
 		
@@ -68,6 +73,32 @@ public class PaymentProcessor {
 		destAcc.add(pd.getAmount());
 		destAcc.setLastTxId(pd.getId());
 		accountRepo.save(destAcc);
+		
+		if(pd.getTxCharge() > 0.1f) {		
+			// part 1- transaction charge amount transfer from source to system
+			// re user same pd object
+			PaymentDetails feePd = pd.copy();
+			feePd.setAmount(pd.getTxCharge());
+			feePd.setTxCharge(0.0);
+			feePd.setTxType(TransactionType.TXCHARGE.name());
+			feePd.setDestUserEmail(AppConstants.SYSTEM_EMAIL);
+			feePd.setDestUserId(AppConstants.SYSTEM_ID);
+			
+			feePd = paymentRepos.save(feePd);
+			
+			// update source a/c balance
+			ad.reduce(feePd.getAmount());
+			ad.setLastTxId(feePd.getId());
+			accountRepo.save(ad);
+			
+			// update destination a/c balance
+			destAcc = getAccountDeatils(feePd.getDestUserId());
+			destAcc.add(feePd.getAmount());
+			destAcc.setLastTxId(feePd.getId());
+			accountRepo.save(destAcc);
+			
+		}
+		
 		return pd;
 	}
 	

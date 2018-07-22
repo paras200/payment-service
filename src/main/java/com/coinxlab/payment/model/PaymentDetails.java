@@ -9,6 +9,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import com.coinxlab.common.NumberUtil;
+
 @Entity
 public class PaymentDetails {
 
@@ -23,16 +25,30 @@ public class PaymentDetails {
 	private String destUserId;
 	private String destUserEmail;
 	private Double amount;
+	private Double txCharge;
 	private String paymentSystem;
 	private String payReference;
 	private String txType;
 	private String enrolId;
 	private Date date = Calendar.getInstance().getTime();
 	private String description;
+	private String roundedAmount;
 	
 	public Integer getId() {
 		return id;
 	}	
+	public PaymentDetails copy() {
+		PaymentDetails pd = new PaymentDetails();
+		pd.setSourceUserEmail(sourceUserEmail);
+		pd.setSourceUserId(sourceUserId);
+		pd.setDestUserId(destUserId);
+		pd.setDestUserEmail(destUserEmail);
+		pd.setAmount(amount);
+		pd.setTxCharge(txCharge);
+		pd.setPaymentSystem(paymentSystem);
+		pd.setPayReference(payReference);
+		return pd;
+	}
 	public String getSourceUserId() {
 		return sourceUserId;
 	}
@@ -95,6 +111,24 @@ public class PaymentDetails {
 	}
 	public void setEnrolId(String enrolId) {
 		this.enrolId = enrolId;
+	}
+	
+	
+	public Double getTxCharge() {
+		return txCharge;
+	}
+	public void setTxCharge(Double txCharge) {
+		this.txCharge = txCharge;
+	}
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	
+	public String getRoundedAmount() {
+		return NumberUtil.roundDouble(amount);
 	}
 	
 	@Override

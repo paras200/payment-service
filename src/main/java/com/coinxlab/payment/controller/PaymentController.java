@@ -14,10 +14,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.coinxlab.common.Result;
+import com.coinxlab.fx.FxRateManager;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.AccountDetails;
+import com.coinxlab.payment.model.CcyTxDetail;
 import com.coinxlab.payment.model.PaymentDetails;
 import com.coinxlab.payment.model.RateCard;
+import com.coinxlab.payment.repos.CcyTransactionRepository;
 import com.coinxlab.payment.repos.PaymentRepository;
 import com.coinxlab.payment.service.PaymentProcessor;
 import com.coinxlab.payment.utils.TransactionType;
@@ -33,6 +36,12 @@ public class PaymentController {
 	
 	@Autowired
 	private PaymentProcessor paymentProcessor;
+	
+	@Autowired
+	private CcyTransactionRepository ccyTxRepo;
+	
+	@Autowired
+	private FxRateManager fxRateMgr;
 	
 	/*@PostMapping(path="/addTransaction") 
 	public @ResponseBody String addTransaction (@RequestParam String srcUserId , @RequestParam String srcUserEmail, @RequestParam String destUserId
@@ -61,6 +70,17 @@ public class PaymentController {
 		return paymentRepos.findAllTxsByUserId(userId);
 	}
 
+	@GetMapping(path="/allccyTx")
+	public @ResponseBody Iterable<CcyTxDetail> getAllCcyTransactions() {
+		// This returns a JSON or XML with the users
+		return ccyTxRepo.findAll();
+	}
+	
+	@GetMapping(path="/all-ccytx-userId")
+	public @ResponseBody Iterable<CcyTxDetail> getAllCcyTransactionsByUserId(@RequestParam String userId) {
+		log.info("allTxByUserId... for userId : " + userId);
+		return ccyTxRepo.findByUserId(userId);
+	}
 	
 	@PostMapping(path="/deposit") 
 	public synchronized @ResponseBody Result deposit (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount) throws PaymentException {		
@@ -83,7 +103,6 @@ public class PaymentController {
 		return new Result(Result.STATUS_SUCCESS);
 	}
 	
-
 	private void validate(PaymentDetails pd) throws PaymentException {		
 		if(StringUtils.isEmpty(pd.getDestUserId()) || StringUtils.isEmpty(pd.getSourceUserId()) || StringUtils.isEmpty(pd.getAmount())){
 			log.error("key input are missing ... can't proceed with the transaction for : "+ pd);
@@ -94,6 +113,14 @@ public class PaymentController {
 	@GetMapping(path="/credit-rate-card")
 	public @ResponseBody RateCard getRateList() {
 		// TODO get fxrate from yahoo finance and apply handling cost
-		return new RateCard();
+		float inrRate = fxRateMgr.getDefaultINRRate();
+		try {
+			 inrRate = fxRateMgr.getINRRate();
+		} catch (PaymentException e) {
+			e.printStackTrace();
+			log.error("error pulling INR Rates ", e);
+			// TODO send notification
+		}
+		return new RateCard(inrRate);
 	}
 }

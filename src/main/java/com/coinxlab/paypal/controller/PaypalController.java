@@ -2,19 +2,32 @@ package com.coinxlab.paypal.controller;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.coinxlab.common.Result;
+import com.coinxlab.payment.error.PaymentException;
+import com.coinxlab.payment.model.CcyTxDetail;
+import com.coinxlab.payment.repos.CcyTransactionRepository;
+import com.coinxlab.payment.service.PaymentProcessor;
 import com.coinxlab.paypal.config.PaypalPaymentIntent;
 import com.coinxlab.paypal.config.PaypalPaymentMethod;
 import com.coinxlab.paypal.model.ResponseData;
 import com.coinxlab.paypal.service.PaypalService;
+import com.coinxlab.paypal.util.PaypalStatus;
 import com.coinxlab.paypal.util.URLUtils;
 import com.paypal.api.payments.Links;
 import com.paypal.api.payments.Payment;
@@ -33,9 +46,83 @@ public class PaypalController {
 	@Autowired
 	private PaypalService paypalService;
 	
+	@Autowired
+	private PaymentProcessor paymentProcessor;
+	
+	@Autowired
+	private CcyTransactionRepository ccyTxRepo;
+	
 	@RequestMapping(method = RequestMethod.GET)
 	public String index(){
 		return "index";
+	}
+	
+	@PostMapping(path="/tx-details") 
+	public synchronized @ResponseBody Result deposit (@RequestBody String txdetailsText ) throws PaymentException {	
+		log.info("paypal tx to be written   : " + txdetailsText);
+		CcyTxDetail ccyTxDeatil = new CcyTxDetail();
+		//JSONObject jsonObject = (JSONObject)txdetails;
+		JSONParser parser = new JSONParser();
+		JSONObject txdetails;
+		try {
+			txdetails = (JSONObject)parser.parse(txdetailsText);
+		} catch (ParseException e) {
+			log.error("Can't parse input request ", e);
+			return new Result(Result.STATUS_FAIL);
+		}
+		
+		String id = (String) txdetails.get("id");
+        String state = (String) txdetails.get("state");
+        
+        String userId = (String) txdetails.get("userId");
+        String userEmail = (String) txdetails.get("userEmail");
+        Double credit = (Double) txdetails.get("credits");
+        
+        
+        ccyTxDeatil.setUserId(userId);
+        ccyTxDeatil.setCreditAmount(credit);
+        
+        ccyTxDeatil.setTxId(id);
+        ccyTxDeatil.setStatus(state);
+        ccyTxDeatil.setPaymentSystem(CcyTxDetail.SYSTEM_PAYPAL);
+        
+        //Reading the array
+        //JSONArray countries = (JSONArray)jsonObject.get("payer");
+        JSONObject payerobj = (JSONObject)txdetails.get("payer");
+        JSONObject payerInfo = (JSONObject)payerobj.get("payer_info");
+        
+        ccyTxDeatil.setPaypalUserEmail((String)payerobj.get("email"));
+        
+        //Printing all the values
+        log.info("id: " + id);
+        log.info("state: " + state);
+        log.info("payerobj:" + payerobj);
+        JSONArray transactions = (JSONArray)txdetails.get("transactions");
+        for (Object tx : transactions) {
+        	JSONObject  jsonamt = (JSONObject) tx;
+        	JSONObject amt = (JSONObject)jsonamt.get("amount");
+        	log.info(amt.toJSONString());
+        	String total = (String) amt.get("total");
+            String currency = (String) amt.get("currency");
+            
+            log.info(total + " in ccy " + currency);
+            ccyTxDeatil.setTxAmount(Double.valueOf(total));
+			ccyTxDeatil.setTxCCY(currency);
+		}
+        
+        String fileName = paypalService.writeTxFileToDisc(txdetails.toJSONString(), id);
+        ccyTxDeatil.setFileRefernece(fileName);
+        ccyTxDeatil = ccyTxRepo.save(ccyTxDeatil);
+        
+        // make deposit if status is approved
+        if(PaypalStatus.approved.name().equalsIgnoreCase(state) || PaypalStatus.completed.name().equalsIgnoreCase(state)) {
+        	paymentProcessor.deposit(userId, userEmail, credit);
+        }
+        
+       
+		//paymentProcessor.deposit(userId, userEmail, amount);
+		log.info("paypal tx saved  for txId : " +id );
+		return new Result(Result.STATUS_SUCCESS);
 	}
 	
 	@RequestMapping(method = RequestMethod.POST, value = "pay")

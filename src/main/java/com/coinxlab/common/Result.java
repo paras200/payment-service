@@ -5,6 +5,7 @@ import java.util.Date;
 public class Result {
 	
 	public static String STATUS_SUCCESS = "SUCCESS";
+	public static String STATUS_FAIL = "FAIL";
 	
 	private String token = new Date().toString();
 	private String status;
