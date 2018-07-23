@@ -61,7 +61,7 @@ public class PaypalController {
 	public synchronized @ResponseBody Result deposit (@RequestBody String txdetailsText ) throws PaymentException {	
 		log.info("paypal tx to be written   : " + txdetailsText);
 		CcyTxDetail ccyTxDeatil = new CcyTxDetail();
-		//JSONObject jsonObject = (JSONObject)txdetails;
+
 		JSONParser parser = new JSONParser();
 		JSONObject txdetails;
 		try {
@@ -76,11 +76,15 @@ public class PaypalController {
         
         String userId = (String) txdetails.get("userId");
         String userEmail = (String) txdetails.get("userEmail");
-        Double credit = (Double) txdetails.get("credits");
+        String credit = (String) txdetails.get("credits");
+        Double creditValue = 0.0;
+        if(credit != null) {
+        	 creditValue = Double.valueOf(credit);
+        }
         
         
         ccyTxDeatil.setUserId(userId);
-        ccyTxDeatil.setCreditAmount(credit);
+        ccyTxDeatil.setCreditAmount(creditValue);
         
         ccyTxDeatil.setTxId(id);
         ccyTxDeatil.setStatus(state);
@@ -89,7 +93,7 @@ public class PaypalController {
         //Reading the array
         //JSONArray countries = (JSONArray)jsonObject.get("payer");
         JSONObject payerobj = (JSONObject)txdetails.get("payer");
-        JSONObject payerInfo = (JSONObject)payerobj.get("payer_info");
+     //   JSONObject payerInfo = (JSONObject)payerobj.get("payer_info");
         
         ccyTxDeatil.setPaypalUserEmail((String)payerobj.get("email"));
         
@@ -114,14 +118,22 @@ public class PaypalController {
         ccyTxDeatil.setFileRefernece(fileName);
         ccyTxDeatil = ccyTxRepo.save(ccyTxDeatil);
         
+        log.info("Paypal transaction details are saved");
         // make deposit if status is approved
         if(PaypalStatus.approved.name().equalsIgnoreCase(state) || PaypalStatus.completed.name().equalsIgnoreCase(state)) {
-        	paymentProcessor.deposit(userId, userEmail, credit);
+        	log.info("save of credit deposit is in progress...");
+        	//validate required paratements
+        	if(creditValue <=0.01 || userEmail == null || userId == null) {
+        		//TODO don't throw error as paypal tx is success.
+        		// just send notification admins, for now error is good for ease of testing
+        		throw new PaymentException("credit , userEmail & userId is mandatory :  userId =" + userId + "  credit  = " + credit);
+        	}
+        	paymentProcessor.deposit(userId, userEmail, creditValue);
         }
         
        
 		//paymentProcessor.deposit(userId, userEmail, amount);
-		log.info("paypal tx saved  for txId : " +id );
+		log.info("paypal tx completed  for txId : " +id );
 		return new Result(Result.STATUS_SUCCESS);
 	}
 	
