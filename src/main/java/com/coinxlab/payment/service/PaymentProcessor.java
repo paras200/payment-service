@@ -53,6 +53,7 @@ public class PaymentProcessor {
 	public synchronized PaymentDetails addTransactions(PaymentDetails pd) throws PaymentException{
 		// validate account balance
 		AccountDetails ad = getAccountDeatils(pd.getSourceUserId());
+		if(pd.getTxCharge() == null) pd.setTxCharge(0.0);
 		if (ad.getAmount() < pd.getAmount() + pd.getTxCharge()) {
 			throw new PaymentException("Account Balance is insufficient for user to make the transaction , minimum balance requered is :" + NumberUtil.roundDouble(pd.getAmount() + pd.getTxCharge()) );
 		}

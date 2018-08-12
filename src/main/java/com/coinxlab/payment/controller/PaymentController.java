@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.coinxlab.common.Result;
+import com.coinxlab.email.EmailClient;
 import com.coinxlab.fx.FxRateManager;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.AccountDetails;
@@ -30,7 +31,9 @@ import com.coinxlab.payment.utils.TransactionType;
 @CrossOrigin(origins = "*")
 @RequestMapping(path="/account")
 public class PaymentController {
+	
 	private static Log log = LogFactory.getLog(PaymentController.class.getName());
+	
 	@Autowired
 	private PaymentRepository paymentRepos;
 	
@@ -43,17 +46,28 @@ public class PaymentController {
 	@Autowired
 	private FxRateManager fxRateMgr;
 	
+	@Autowired
+	private EmailClient emailClient;
+	
 	/*@PostMapping(path="/addTransaction") 
 	public @ResponseBody String addTransaction (@RequestParam String srcUserId , @RequestParam String srcUserEmail, @RequestParam String destUserId
 			, @RequestParam String destUserEmail, @RequestParam Double amount) throws PaymentException {*/		
 
 	@PostMapping(path="/addTransaction") 
 	public @ResponseBody PaymentDetails addTransaction (@RequestBody PaymentDetails pd) throws PaymentException {
-		validate(pd);
-		pd.setTxType(TransactionType.TRANSFER.name());
-		pd.setPaymentSystem("INTERNAL");
-		pd = paymentProcessor.addTransactions(pd);
-		log.info("Transfer completed for :" + pd);
+		try {
+			validate(pd);
+			pd.setTxType(TransactionType.TRANSFER.name());
+			pd.setPaymentSystem("INTERNAL");
+			pd = paymentProcessor.addTransactions(pd);
+			log.info("Transfer completed for :" + pd);
+			emailClient.sendTransactionConfirmation(pd);
+		}catch(PaymentException ex) {
+			log.error("creadit transactions failed : " + pd);
+			emailClient.sendTransactionFailuer(pd);
+			throw ex;
+		}
+		
 		return pd;
 	}
 	
@@ -119,6 +133,7 @@ public class PaymentController {
 		} catch (PaymentException e) {
 			e.printStackTrace();
 			log.error("error pulling INR Rates ", e);
+			emailClient.sendInternalError("error pulling INR Rates : " + e.getMessage());
 			// TODO send notification
 		}
 		return new RateCard(inrRate);

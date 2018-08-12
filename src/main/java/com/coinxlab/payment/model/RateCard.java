@@ -8,6 +8,7 @@ public class RateCard {
 	private float payPalTxCharge = 2.5f ;
 	private float paytmTxCharge = 1.0f;
 	private int txCharge = 5;
+	private int minimumCreditBalance = 5;
 	
 	public RateCard(float inrRate) {
 		initFxRate(inrRate);/// set fxrate 

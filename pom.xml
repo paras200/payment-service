@@ -139,6 +139,12 @@
     		<artifactId>springfox-swagger-ui</artifactId>
     		<version>2.7.0</version>
 		</dependency>
+		
+		<dependency>
+    		<groupId>io.sentry</groupId>
+    		<artifactId>sentry-logback</artifactId>
+    		<version>1.7.5</version>
+		</dependency>
     </dependencies>
 
     <properties>

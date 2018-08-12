@@ -131,7 +131,6 @@ public class PaymentDetails {
 		return NumberUtil.roundDouble(amount);
 	}
 	
-	
 	@Override
 	public String toString() {
 		return "PaymentDetails [id=" + id + ", sourceUserId=" + sourceUserId + ", sourceUserEmail=" + sourceUserEmail

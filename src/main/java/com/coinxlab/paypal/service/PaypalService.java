@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.coinxlab.email.EmailClient;
 import com.coinxlab.filemgmt.FileHandlerUtil;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.paypal.config.PaypalPaymentIntent;
@@ -31,6 +32,9 @@ public class PaypalService {
 	private static String PAYPAL_TX_DIR = "txdata" + File.separator + "paypal"; 
 	@Autowired
 	private APIContext apiContext;
+	
+	@Autowired
+	private EmailClient emailClient;
 	
 	public Payment createPayment(
 			Double total, 
@@ -81,7 +85,8 @@ public class PaypalService {
 			new FileHandlerUtil().writeFile(text, fileName);
 		} catch (IOException e) {
 			log.error("error in writing file : " + fileName  + " /n data :" + text , e);
-			throw new PaymentException("error writeing tx details to file", e);
+			//throw new PaymentException("error writeing tx details to file", e);
+			emailClient.sendInternalError("Error writing paypal tx file to disc " + e.getMessage());
 		}
 		return fileName;
 	}

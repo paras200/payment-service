@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.coinxlab.email.EmailClient;
 import com.coinxlab.payment.job.AccountValidatorJob;
 import com.coinxlab.payment.model.AccountDetails;
 import com.coinxlab.payment.model.PaymentDetails;
@@ -29,6 +30,9 @@ public class AccountValidator {
 	@Autowired
 	private PaymentRepository paymentRepository;
 	
+	@Autowired
+	private EmailClient emailClient;
+		
 	@PostConstruct
 	public void init(){
 		AccountValidatorJob job = new AccountValidatorJob(this);
@@ -42,7 +46,7 @@ public class AccountValidator {
 			log.info("Validataion started for the a/c : "+ad);
 			Double origAccBalance = ad.getAmount();
 			Double derivedAccBal = getAccoutBalanceAsPerPaymentData(ad.getUserId());
-			if((Math.abs(origAccBalance - derivedAccBal)) <= 0.0001){
+			if((Math.abs(origAccBalance - derivedAccBal)) <= 0.01){
 				log.info("balance matching for user a/c, userID : " + ad.getUserId());
 			}else{
 				log.error("balance ** NOT ** matching for user a/c, userID : " + ad.getUserId());
@@ -53,7 +57,11 @@ public class AccountValidator {
 				listOfMsitach.add(txt.toString());
 			}
 		}
-		// 
+		// send email 
+		if(listOfMsitach.size() > 0) {
+			emailClient.sendInternalError(listOfMsitach.toString());
+		}
+		
 		return listOfMsitach;		
 	}
 	
