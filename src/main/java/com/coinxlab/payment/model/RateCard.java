@@ -1,3 +1,4 @@
+
 package com.coinxlab.payment.model;
 
 import java.util.List;
@@ -5,10 +6,11 @@ import java.util.List;
 public class RateCard {
 
 	private List<FxRate> fxRates ;
-	private float payPalTxCharge = 2.5f ;
-	private float paytmTxCharge = 1.0f;
+	private float payPalTxCharge = 0.0f ;
+	private float paytmTxCharge = 0.0f;
+	private float directDepositTxCharge = 1.0f;
 	private int txCharge = 5;
-	private int minimumCreditBalance = 5;
+	private int minimumCreditBalance = 3;
 	
 	public RateCard(float inrRate) {
 		initFxRate(inrRate);/// set fxrate 
@@ -32,6 +34,14 @@ public class RateCard {
 		this.paytmTxCharge = paytmTxCharge;
 	}
 
+	public float getDirectDepositTxCharge() {
+		return directDepositTxCharge;
+	}
+
+	public void setDirectDepositTxCharge(float directDepositTxCharge) {
+		this.directDepositTxCharge = directDepositTxCharge;
+	}
+
 	public List<FxRate> getFxRates() {
 		return fxRates;
 	}
@@ -46,6 +56,14 @@ public class RateCard {
 
 	public void setTxCharge(int txCharge) {
 		this.txCharge = txCharge;
+	}
+
+	public int getMinimumCreditBalance() {
+		return minimumCreditBalance;
+	}
+
+	public void setMinimumCreditBalance(int minimumCreditBalance) {
+		this.minimumCreditBalance = minimumCreditBalance;
 	}
 	
 	

@@ -8,6 +8,6 @@ public interface AppConstants {
 	public static String SYSTEM_EMAIL ="mybuddy"; 
 	public static String SYSTEM_ID ="coinxlab";
 	
-	public static String MYBUDDY_EMAIL="coinxlab@gmail.com";
+	public static String MYBUDDY_EMAIL="mybuddypro@gmail.com";
 	
 }

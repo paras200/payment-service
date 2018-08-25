@@ -9,7 +9,7 @@ public class FxRate {
 	private float depositRate;
 	private float withdrawalRate;
 	
-	private float fxConversionRate = 5 ; // in percentage
+	private float fxConversionRate = 4 ; // in percentage
 	
 	enum CURRENCY{
 		   INR, USD;

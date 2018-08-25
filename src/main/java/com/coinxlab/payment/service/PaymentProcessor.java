@@ -8,6 +8,8 @@ import java.util.concurrent.BlockingQueue;
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -15,9 +17,11 @@ import org.springframework.stereotype.Service;
 import com.coinxlab.common.NumberUtil;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.AccountDetails;
+import com.coinxlab.payment.model.CcyTxDetail;
 import com.coinxlab.payment.model.PaymentDetails;
 import com.coinxlab.payment.model.TxDetails;
 import com.coinxlab.payment.repos.AccountRepository;
+import com.coinxlab.payment.repos.CcyTransactionRepository;
 import com.coinxlab.payment.repos.PaymentRepository;
 import com.coinxlab.payment.repos.TransactionRepository;
 import com.coinxlab.payment.utils.AppConstants;
@@ -28,6 +32,8 @@ import com.coinxlab.payment.utils.TransactionType;
 public class PaymentProcessor {
 	
 	private BlockingQueue<TxDetails> queue = new ArrayBlockingQueue<>(100);
+	
+	private static Log log = LogFactory.getLog(PaymentProcessor.class.getName());
     
 	@Autowired
 	private PaymentRepository paymentRepos;
@@ -40,6 +46,9 @@ public class PaymentProcessor {
 	
 	@Autowired
 	private PaymentProcessor payProcessor;
+	
+	@Autowired
+	private CcyTransactionRepository ccyTxRepo;
 	
 	@PostConstruct
 	public void init(){
@@ -147,6 +156,20 @@ public class PaymentProcessor {
 		ad.setAmount(ad.getAmount() + amount);
 		ad.setLastTxId(pd.getId());
 		accountRepo.save(ad);
+	}
+	
+	@Transactional
+	public synchronized void validatedDirectDeposit (CcyTxDetail ddTx) throws PaymentException {	
+		//directDeposit = directDepositRepo.save(directDeposit);
+		ddTx = ccyTxRepo.save(ddTx);
+		log.info("deposit deposit tx validated for : " + ddTx.getUserEmail() + "   tx ref :  " + ddTx.getTxReference());
+		log.info("add credits to user deposit");
+		try {
+			deposit(ddTx.getUserId(), ddTx.getUserEmail(), ddTx.getCreditAmount());
+		} catch (PaymentException e) {
+			log.error( "direct deposit failed for user : " + ddTx.getUserEmail() + "  and  tx ref :  " + ddTx.getTxReference(), e);
+			throw new PaymentException( "direct deposit failed for user : " + ddTx.getUserEmail() + "  and  tx ref :  " + ddTx.getTxReference(), e);
+		}
 	}
 	
 	public AccountDetails getAccountDeatils(String userId) throws PaymentException {

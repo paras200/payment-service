@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.coinxlab.common.Result;
+import com.coinxlab.email.EmailClient;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.CcyTxDetail;
 import com.coinxlab.payment.repos.CcyTransactionRepository;
@@ -51,6 +52,9 @@ public class PaypalController {
 	
 	@Autowired
 	private CcyTransactionRepository ccyTxRepo;
+	
+	@Autowired
+	private EmailClient emailClient;
 	
 	@RequestMapping(method = RequestMethod.GET)
 	public String index(){
@@ -89,6 +93,7 @@ public class PaypalController {
         ccyTxDeatil.setTxId(id);
         ccyTxDeatil.setStatus(state);
         ccyTxDeatil.setPaymentSystem(CcyTxDetail.SYSTEM_PAYPAL);
+        ccyTxDeatil.setTxReference(id);
         
         //Reading the array
         //JSONArray countries = (JSONArray)jsonObject.get("payer");
@@ -122,13 +127,17 @@ public class PaypalController {
         // make deposit if status is approved
         if(PaypalStatus.approved.name().equalsIgnoreCase(state) || PaypalStatus.completed.name().equalsIgnoreCase(state)) {
         	log.info("save of credit deposit is in progress...");
+        	emailClient.sendPaymentConfirmation(creditValue, userEmail);
         	//validate required paratements
         	if(creditValue <=0.01 || userEmail == null || userId == null) {
         		//TODO don't throw error as paypal tx is success.
         		// just send notification admins, for now error is good for ease of testing
+        		emailClient.sendInternalError("Credit deposit failed , key input is missing. " + "credit , userEmail & userId is mandatory :  userId =" + userId + "  credit  = " + credit);
         		throw new PaymentException("credit , userEmail & userId is mandatory :  userId =" + userId + "  credit  = " + credit);
         	}
         	paymentProcessor.deposit(userId, userEmail, creditValue);
+        }else {
+        	emailClient.sendInternalError("Paypal payment issue, status is : " + state);
         }
         
        

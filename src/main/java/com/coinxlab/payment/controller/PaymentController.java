@@ -1,5 +1,10 @@
 package com.coinxlab.payment.controller;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +24,7 @@ import com.coinxlab.fx.FxRateManager;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.AccountDetails;
 import com.coinxlab.payment.model.CcyTxDetail;
+import com.coinxlab.payment.model.DirectDeposit;
 import com.coinxlab.payment.model.PaymentDetails;
 import com.coinxlab.payment.model.RateCard;
 import com.coinxlab.payment.repos.CcyTransactionRepository;
@@ -48,6 +54,7 @@ public class PaymentController {
 	
 	@Autowired
 	private EmailClient emailClient;
+	
 	
 	/*@PostMapping(path="/addTransaction") 
 	public @ResponseBody String addTransaction (@RequestParam String srcUserId , @RequestParam String srcUserEmail, @RequestParam String destUserId
@@ -114,6 +121,7 @@ public class PaymentController {
 	public synchronized @ResponseBody Result withdraw (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount) throws PaymentException {		
 		paymentProcessor.withdraw(userId, userEmail, amount);
 		log.info("withdrawal completed by userId : " + userId);
+		emailClient.sendWithdrawalConfirmation(userEmail, amount);
 		return new Result(Result.STATUS_SUCCESS);
 	}
 	
@@ -137,5 +145,66 @@ public class PaymentController {
 			// TODO send notification
 		}
 		return new RateCard(inrRate);
+	}
+	
+	@PostMapping(path="/save-direct-deposit-txdetails") 
+	public @ResponseBody Result deposit (@RequestBody DirectDeposit directDeposit) throws PaymentException {	
+		//directDeposit.setStatus(DirectDeposit.STATUS_INPROGRESS);
+		CcyTxDetail ccyTxDetail = new CcyTxDetail();
+		ccyTxDetail.setCreditAmount(directDeposit.getCredit());
+		ccyTxDetail.setStatus(DirectDeposit.STATUS_INPROGRESS);
+		ccyTxDetail.setPaymentSystem(CcyTxDetail.SYSTEM_DD);
+		ccyTxDetail.setUserEmail(directDeposit.getUserEmail());
+		ccyTxDetail.setUserId(directDeposit.getUserId());
+		ccyTxDetail.setTotalAmount(directDeposit.getAmount());
+		ccyTxDetail.setTxCCY(directDeposit.getCcy());
+		ccyTxDetail.setTxCharge(directDeposit.getTxFee());
+		ccyTxDetail.setTxReference(directDeposit.getTxReference());
+		
+		//directDeposit = directDepositRepo.save(directDeposit);
+		ccyTxDetail = ccyTxRepo.save(ccyTxDetail);
+		log.info("deposit deposit details sent by : " + ccyTxDetail.getUserId() + "   email " + ccyTxDetail.getUserEmail());
+		return new Result("SUCCESS");
+	}
+	
+	@GetMapping(path="/get-direct-deposit-list")
+	public @ResponseBody List<DirectDeposit> getDirectDepositTxs(@RequestParam String userEmail) throws PaymentException {
+		List<DirectDeposit> depositList = new ArrayList<>();
+		List<CcyTxDetail> txList = ccyTxRepo.findByUserEmailAndPaymentSystem(userEmail, CcyTxDetail.SYSTEM_DD);
+		for (CcyTxDetail ccyTxDetail : txList) {
+			DirectDeposit dd = new DirectDeposit();
+			dd.setAmount(ccyTxDetail.getTotalAmount());
+			dd.setCredit(ccyTxDetail.getCreditAmount());
+			dd.setStatus(ccyTxDetail.getStatus());
+			dd.setUserEmail(ccyTxDetail.getUserEmail());
+			dd.setCcy(ccyTxDetail.getTxCCY());
+			dd.setTxFee(ccyTxDetail.getTxCharge());
+			dd.setUserId(ccyTxDetail.getUserId());
+			dd.setId(ccyTxDetail.getId());
+			depositList.add(dd);
+		}
+		log.info("direct deposit tx list for " + userEmail + " is returned");
+		return depositList;
+	}
+	
+	@PostMapping(path="/confirm-direct-deposit-payment") 
+	public synchronized @ResponseBody Result validatedDirectDeposit (@RequestParam Long id ,  @RequestParam String userId, @RequestParam String loginUserEmail) throws PaymentException {	
+		Optional<CcyTxDetail> txDetailList = ccyTxRepo.findById(id);
+		if(txDetailList.isPresent()) {
+			CcyTxDetail ddTx =  txDetailList.get();
+			if(!ddTx.getUserId().equalsIgnoreCase(userId)) {
+				log.info("validation failed ... user id is not matching , userId as per txTable : "+ ddTx.getUserId() + "  & supplied userid is : " + userId);
+				throw new PaymentException("validation failed ... user id is not matching , userId as per txTable : "+ ddTx.getUserId() + "  & supplied userid is : " + userId);
+			}
+			ddTx.setStatus(DirectDeposit.STATUS_COMPLETED);
+			ddTx.setUpdatedBy(loginUserEmail);
+			ddTx.setLastUpdatedAt(new Date());
+			paymentProcessor.validatedDirectDeposit(ddTx);
+		}else {
+			log.error("id is not corret , id supplied is : " + id);
+			throw new PaymentException("id is not corret , id supplied is : " + id);
+		}
+		
+		return new Result("SUCCESS");
 	}
 }

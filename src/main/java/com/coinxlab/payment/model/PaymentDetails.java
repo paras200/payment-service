@@ -33,6 +33,8 @@ public class PaymentDetails {
 	private Date date = Calendar.getInstance().getTime();
 	private String description;
 	private String roundedAmount;
+	private Double sourceAcBalance;
+	private Double destAcBalance;
 	
 	public Integer getId() {
 		return id;
@@ -130,6 +132,23 @@ public class PaymentDetails {
 	public String getRoundedAmount() {
 		return NumberUtil.roundDouble(amount);
 	}
+	
+	public Double getSourceAcBalance() {
+		return sourceAcBalance;
+	}
+	public void setSourceAcBalance(Double sourceAcBalance) {
+		this.sourceAcBalance = sourceAcBalance;
+	}
+	public Double getDestAcBalance() {
+		return destAcBalance;
+	}
+	public void setDestAcBalance(Double destAcBalance) {
+		this.destAcBalance = destAcBalance;
+	}
+	/**
+	public void setRoundedAmount(String roundedAmount) {
+		this.roundedAmount = roundedAmount;
+	} */
 	
 	@Override
 	public String toString() {

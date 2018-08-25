@@ -10,8 +10,9 @@ import javax.persistence.Id;
 @Entity
 public class CcyTxDetail {
 	
-	public static String SYSTEM_PAYPAL ="paypal";  
-	public static String SYSTEM_PAYTM ="paytm";
+	public static String SYSTEM_PAYPAL ="PAYPAL";  
+	public static String SYSTEM_PAYTM ="PAYTM";
+	public static String SYSTEM_DD ="DD"; // direct deposit
 	
 	@Id
     @GeneratedValue(strategy=GenerationType.AUTO)
@@ -33,8 +34,12 @@ public class CcyTxDetail {
 	
 	
 	private String paymentSystem;
+	private String txReference;
 	
 	private String fileRefernece;
+	private String comments;
+	private Date lastUpdatedAt = new Date();
+	private String updatedBy;
 
 
 	public Integer getId() {
@@ -149,5 +154,38 @@ public class CcyTxDetail {
 	public void setFileRefernece(String fileRefernece) {
 		this.fileRefernece = fileRefernece;
 	}
+
+	public String getTxReference() {
+		return txReference;
+	}
+
+	public void setTxReference(String txReference) {
+		this.txReference = txReference;
+	}
+
+	public String getComments() {
+		return comments;
+	}
+
+	public void setComments(String comments) {
+		this.comments = comments;
+	}
+
+	public Date getLastUpdatedAt() {
+		return lastUpdatedAt;
+	}
+
+	public void setLastUpdatedAt(Date lastUpdatedAt) {
+		this.lastUpdatedAt = lastUpdatedAt;
+	}
+
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+	
 	
 }

@@ -1,6 +1,8 @@
 package com.coinxlab.email;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import com.coinxlab.common.NumberUtil;
 import com.coinxlab.payment.controller.PaymentController;
 import com.coinxlab.payment.model.PaymentDetails;
 import com.coinxlab.payment.utils.AppConstants;
@@ -29,13 +32,13 @@ public class EmailClient {
 	
 	@PostConstruct
 	public void init(){
-		templateBasedUrl = emailServerUrl +"/sendMail";
+		templateBasedUrl = emailServerUrl +"/sendTemplateMail";
 		customEmailUrl = emailServerUrl + "/sendMail"; // TODO change
 	}
 	
-	public void sendPaymentConfirmation(EmailBody emailBody) {
+	public void sendEmailByTemplate(EmailBody emailBody) {
         RestTemplate restTemplate = new RestTemplate();
-		restTemplate.postForEntity(customEmailUrl, emailBody, String.class);
+		restTemplate.postForEntity(templateBasedUrl, emailBody, String.class);
 	}
 	
 	public void sendPaymentFailuer(EmailBody emailBody) {
@@ -46,16 +49,24 @@ public class EmailClient {
 	public void sendTransactionConfirmation(PaymentDetails pd) {
 		try {
 			EmailBody emailBody = new EmailBody();
-			emailBody.setBody("Credit Transaction of " + pd.getAmount() + " is done from a/c : " + pd.getSourceUserEmail() + "  to a/c : " + pd.getDestUserEmail());
-			emailBody.setSubject("Credit Transaction is successfull");
-			//emailBody.setTemplate("txn-success");
+			//emailBody.setBody("Credit Transaction of " + pd.getAmount() + " is done from a/c : " + pd.getSourceUserEmail() + "  to a/c : " + pd.getDestUserEmail());
+			//emailBody.setSubject("Credit Transaction is successfull");
+			emailBody.setTemplate("txn-success");
 			List<String> toList = emailBody.getToList();
 			toList.add(pd.getSourceUserEmail());
 			toList.add(pd.getDestUserEmail());
 			emailBody.setToList(toList);
+			
+			Map<String,String> paramMap = new HashMap<>();
+			paramMap.put("credit", NumberUtil.roundDouble(pd.getAmount()));
+			paramMap.put("fromUser", pd.getSourceUserEmail());
+			paramMap.put("toUser", pd.getDestUserEmail());
+			paramMap.put("txnCharge", NumberUtil.roundDouble(pd.getTxCharge()));
+			emailBody.setParamMap(paramMap);
+			
 	        RestTemplate restTemplate = new RestTemplate();
 	        log.info("sending email .... "  + emailBody);
-			restTemplate.postForEntity(customEmailUrl, emailBody, String.class);
+			restTemplate.postForEntity(templateBasedUrl, emailBody, String.class);
 		}catch(Exception ex) {
 			log.error("Error sending email ", ex);
 		}
@@ -65,16 +76,23 @@ public class EmailClient {
 	public void sendTransactionFailuer(PaymentDetails pd) {
 		try {
 			EmailBody emailBody = new EmailBody();
-			emailBody.setBody("Credit Transaction of " + pd.getAmount() + " from a/c : " + pd.getSourceUserEmail() + "  to a/c : " + pd.getDestUserEmail() + "  is Failed");
-			emailBody.setSubject("Credit Transaction Failuer");
+			//emailBody.setBody("Credit Transaction of " + pd.getAmount() + " from a/c : " + pd.getSourceUserEmail() + "  to a/c : " + pd.getDestUserEmail() + "  is Failed");
+			//emailBody.setSubject("Credit Transaction Failuer");
 			emailBody.setTemplate("txn-failed");
 			List<String> toList = emailBody.getToList();
 			toList.add(pd.getSourceUserEmail());
 			toList.add(pd.getDestUserEmail());
 			emailBody.setToList(toList);
+			
+			Map<String,String> paramMap = new HashMap<>();
+			paramMap.put("nosOfcredit", NumberUtil.roundDouble(pd.getAmount()));
+			paramMap.put("fromUser", pd.getSourceUserEmail());
+			paramMap.put("toUser", pd.getDestUserEmail());
+			emailBody.setParamMap(paramMap);
+			
 	        RestTemplate restTemplate = new RestTemplate();
 	        log.info("sending email .... "  + emailBody);
-			restTemplate.postForEntity(customEmailUrl, emailBody, String.class);
+			restTemplate.postForEntity(templateBasedUrl, emailBody, String.class);
 		}catch(Exception ex) {
 			log.error("Error sending email ", ex);
 		}
@@ -95,5 +113,50 @@ public class EmailClient {
 			log.error("Error sending email ", ex);
 		}
 
+	}
+
+	public void sendPaymentConfirmation(Double creditValue, String userEmail) {
+		EmailBody eb = new EmailBody();
+		eb.setTemplate("add-credit");
+		List<String> toList = eb.getToList();
+		toList.add(userEmail);
+		eb.setToList(toList);
+		
+		Map<String,String> paramMap = new HashMap<>();
+		paramMap.put("credit", NumberUtil.roundDouble(creditValue));
+		paramMap.put("email", userEmail);
+		
+		eb.setParamMap(paramMap);
+		sendEmailByTemplate(eb);
+	}
+	
+	public void sendPaymentFailuer(Double creditValue, String userEmail) {
+		EmailBody eb = new EmailBody();
+		eb.setTemplate("add-credit");
+		List<String> toList = eb.getToList();
+		toList.add(userEmail);
+		eb.setToList(toList);
+		
+		Map<String,String> paramMap = new HashMap<>();
+		paramMap.put("credit", NumberUtil.roundDouble(creditValue));
+		paramMap.put("email", userEmail);
+		
+		eb.setParamMap(paramMap);
+		sendEmailByTemplate(eb);
+	}
+
+	public void sendWithdrawalConfirmation(String userEmail, Double amount) {
+		EmailBody eb = new EmailBody();
+		eb.setTemplate("withdraw-credit");
+		List<String> toList = eb.getToList();
+		toList.add(userEmail);
+		eb.setToList(toList);
+		
+		Map<String,String> paramMap = new HashMap<>();
+		paramMap.put("credit", amount+"");//NumberUtil.roundDouble(amount)
+		paramMap.put("email", userEmail);
+		eb.setParamMap(paramMap);
+		
+		sendEmailByTemplate(eb);
 	}
 }
