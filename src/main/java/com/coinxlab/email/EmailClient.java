@@ -21,7 +21,7 @@ import com.coinxlab.payment.utils.AppConstants;
 @Component
 public class EmailClient {
 
-	private static Log log = LogFactory.getLog(PaymentController.class.getName());
+	private static Log log = LogFactory.getLog(EmailClient.class.getName());
 
 	@Value("${email.server.url}")
 	private String emailServerUrl;

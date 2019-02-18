@@ -1,7 +1,15 @@
 # ignore all class
-**/*.class
-*.class
-**/target/*
 /.project
 /bin/
 /payment-app.log
+# Maven
+target/
+logs/
+*.log
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+*.class
