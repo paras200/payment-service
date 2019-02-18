@@ -1,0 +1,57 @@
+{
+	"id": "PAY-476390605C3080259LNJLIXY",
+	"intent": "sale",
+	"state": "approved",
+	"cart": "9JJ62164P6526751C",
+	"create_time": "2018-07-21T04:22:59Z",
+	"userId": "100",
+	"userEmail":"anil@abc.com",
+	"credits": 100.0,
+	"payer": {
+		"payment_method": "paypal",
+		"status": "UNVERIFIED",
+		"payer_info": {
+			"email": "er.mr.bhushan@gmail.com",
+			"first_name": "B",
+			"middle_name": "B",
+			"last_name": "P",
+			"payer_id": "2NVC6D5B6LJMY",
+			"country_code": "IN",
+			"shipping_address": {
+				"recipient_name": "B P",
+				"line1": "Flat no. 701, Shree ram chandrama,",
+				"line2": "behind maruti showroom, Banglore pune highway",
+				"city": "Pune",
+				"state": "Maharashtra",
+				"postal_code": "411045",
+				"country_code": "IN"
+			}
+		}
+	},
+	"transactions": [{
+		"amount": {
+			"total": "697.00",
+			"currency": "INR",
+			"details": {}
+		},
+		"item_list": {},
+		"related_resources": [{
+			"sale": {
+				"id": "7HL49851P4472093U",
+				"state": "completed",
+				"payment_mode": "INSTANT_TRANSFER",
+				"protection_eligibility": "ELIGIBLE",
+				"parent_payment": "PAY-476390605C3080259LNJLIXY",
+				"create_time": "2018-07-21T04:22:58Z",
+				"update_time": "2018-07-21T04:22:58Z",
+				"amount": {
+					"total": "697.00",
+					"currency": "INR",
+					"details": {
+						"subtotal": "697.00"
+					}
+				}
+			}
+		}]
+	}]
+}
