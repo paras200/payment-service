@@ -9,15 +9,17 @@ import javax.annotation.PostConstruct;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.coinxlab.common.NumberUtil;
-import com.coinxlab.payment.controller.PaymentController;
 import com.coinxlab.payment.model.PaymentDetails;
 import com.coinxlab.payment.utils.AppConstants;
 
-
+@EnableAsync
 @Component
 public class EmailClient {
 
@@ -36,7 +38,7 @@ public class EmailClient {
 		customEmailUrl = emailServerUrl + "/sendMail"; // TODO change
 	}
 	
-	public void sendEmailByTemplate(EmailBody emailBody) {
+	private void sendEmailByTemplate(EmailBody emailBody) {
         RestTemplate restTemplate = new RestTemplate();
 		restTemplate.postForEntity(templateBasedUrl, emailBody, String.class);
 	}
@@ -46,6 +48,7 @@ public class EmailClient {
 		restTemplate.postForEntity(customEmailUrl, emailBody, String.class);
 	}
 	
+	@Async
 	public void sendTransactionConfirmation(PaymentDetails pd) {
 		try {
 			EmailBody emailBody = new EmailBody();
@@ -64,7 +67,7 @@ public class EmailClient {
 			paramMap.put("txnCharge", NumberUtil.roundDouble(pd.getTxCharge()));
 			emailBody.setParamMap(paramMap);
 			
-	        RestTemplate restTemplate = new RestTemplate();
+	        RestTemplate restTemplate = getRestTemplate();//new RestTemplate();
 	        log.info("sending email .... "  + emailBody);
 			restTemplate.postForEntity(templateBasedUrl, emailBody, String.class);
 		}catch(Exception ex) {
@@ -72,7 +75,12 @@ public class EmailClient {
 		}
 
 	}
+
+	private RestTemplate getRestTemplate() {
+		return new RestTemplate();//RestTemplate(getClientHttpRequestFactory());
+	}
 	
+	@Async
 	public void sendTransactionFailuer(PaymentDetails pd) {
 		try {
 			EmailBody emailBody = new EmailBody();
@@ -90,7 +98,7 @@ public class EmailClient {
 			paramMap.put("toUser", pd.getDestUserEmail());
 			emailBody.setParamMap(paramMap);
 			
-	        RestTemplate restTemplate = new RestTemplate();
+	        RestTemplate restTemplate = getRestTemplate();//new RestTemplate();
 	        log.info("sending email .... "  + emailBody);
 			restTemplate.postForEntity(templateBasedUrl, emailBody, String.class);
 		}catch(Exception ex) {
@@ -99,6 +107,7 @@ public class EmailClient {
 
 	}
 	
+	@Async
 	public void sendInternalError(String body) {
 		try {
 	        RestTemplate restTemplate = new RestTemplate();
@@ -115,6 +124,7 @@ public class EmailClient {
 
 	}
 
+	@Async
 	public void sendPaymentConfirmation(Double creditValue, String userEmail) {
 		EmailBody eb = new EmailBody();
 		eb.setTemplate("add-credit");
@@ -130,6 +140,7 @@ public class EmailClient {
 		sendEmailByTemplate(eb);
 	}
 	
+	@Async
 	public void sendPaymentFailuer(Double creditValue, String userEmail) {
 		EmailBody eb = new EmailBody();
 		eb.setTemplate("add-credit");
@@ -145,6 +156,7 @@ public class EmailClient {
 		sendEmailByTemplate(eb);
 	}
 
+	@Async
 	public void sendWithdrawalConfirmation(String userEmail, Double amount) {
 		EmailBody eb = new EmailBody();
 		eb.setTemplate("withdraw-credit");
@@ -158,5 +170,18 @@ public class EmailClient {
 		eb.setParamMap(paramMap);
 		
 		sendEmailByTemplate(eb);
+	}
+	
+	//Override timeouts in request factory
+	private HttpComponentsClientHttpRequestFactory getClientHttpRequestFactory()
+	{
+	    HttpComponentsClientHttpRequestFactory clientHttpRequestFactory
+	                      = new HttpComponentsClientHttpRequestFactory();
+	    //Connect timeout
+	    clientHttpRequestFactory.setConnectTimeout(1000);
+	     
+	    //Read timeout
+	   // clientHttpRequestFactory.setReadTimeout(10_000);
+	    return clientHttpRequestFactory;
 	}
 }
