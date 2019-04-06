@@ -23,6 +23,7 @@ import com.coinxlab.email.EmailClient;
 import com.coinxlab.fx.FxRateManager;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.AccountDetails;
+import com.coinxlab.payment.model.CashTx;
 import com.coinxlab.payment.model.CcyTxDetail;
 import com.coinxlab.payment.model.DirectDeposit;
 import com.coinxlab.payment.model.PaymentDetails;
@@ -118,11 +119,24 @@ public class PaymentController {
 	}
 	
 	@PostMapping(path="/withdraw") 
-	public synchronized @ResponseBody Result withdraw (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount) throws PaymentException {		
+	public synchronized @ResponseBody Result withdraw (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount , @RequestParam Double cashAmount, @RequestParam String ccy) throws PaymentException {		
 		paymentProcessor.withdraw(userId, userEmail, amount);
 		log.info("withdrawal completed by userId : " + userId);
 		emailClient.sendWithdrawalConfirmation(userEmail, amount);
+		paymentProcessor.saveCashWithdrawalRequest(userId, amount, cashAmount, ccy);
 		return new Result(Result.STATUS_SUCCESS);
+	}
+	
+	@PostMapping(path="/withdraw-confirmation-by-admin") 
+	public synchronized @ResponseBody Result withdraw (@RequestParam String userId , @RequestParam Long txId, @RequestParam String comment , @RequestParam String adminUserId) throws PaymentException {		
+		paymentProcessor.completeCashWithdrawal(adminUserId, userId, txId, comment);
+		return new Result(Result.STATUS_SUCCESS);
+	}
+	
+	@GetMapping(path="/get-cash-withdrawal-list") 
+	public synchronized @ResponseBody List<CashTx> withdraw (@RequestParam String userId ) throws PaymentException {		
+		
+		return paymentProcessor.getAllCashWithdrawalRequest(userId);
 	}
 	
 	private void validate(PaymentDetails pd) throws PaymentException {		

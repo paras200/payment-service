@@ -1,7 +1,9 @@
 package com.coinxlab.payment.service;
 
 
+import java.util.Calendar;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -17,10 +19,12 @@ import org.springframework.stereotype.Service;
 import com.coinxlab.common.NumberUtil;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.AccountDetails;
+import com.coinxlab.payment.model.CashTx;
 import com.coinxlab.payment.model.CcyTxDetail;
 import com.coinxlab.payment.model.PaymentDetails;
 import com.coinxlab.payment.model.TxDetails;
 import com.coinxlab.payment.repos.AccountRepository;
+import com.coinxlab.payment.repos.CashTxRepository;
 import com.coinxlab.payment.repos.CcyTransactionRepository;
 import com.coinxlab.payment.repos.PaymentRepository;
 import com.coinxlab.payment.repos.TransactionRepository;
@@ -49,6 +53,9 @@ public class PaymentProcessor {
 	
 	@Autowired
 	private CcyTransactionRepository ccyTxRepo;
+	
+	@Autowired
+	private CashTxRepository cashTxRepo;
 	
 	@PostConstruct
 	public void init(){
@@ -174,6 +181,39 @@ public class PaymentProcessor {
 	
 	public AccountDetails getAccountDeatils(String userId) throws PaymentException {
 		return getAccountDeatils(userId,null);
+	}
+	
+	public void saveCashWithdrawalRequest(String userId, Double creditAmt , Double cashAmt, String ccy) {
+		CashTx cashTx = new CashTx();
+		cashTx.setCashAmt(cashAmt);
+		cashTx.setCreditAmt(creditAmt);
+		cashTx.setUserId(userId);
+		cashTx.setTxType(TransactionType.WITHDRAWAL.name());
+		cashTx.setCcy(ccy);
+		cashTxRepo.save(cashTx);
+		log.info("Cash withdrawal request has noted " + cashTx);
+	}
+	
+	public void completeCashWithdrawal(String adminId, String userId,Long txId , String comment) throws PaymentException {
+		Optional<CashTx> optTx = cashTxRepo.findById(txId);
+		if(optTx.isPresent()) {
+			CashTx cashTx = optTx.get();
+			cashTx.setAdminId(adminId);
+			cashTx.setStatus(CashTx.COMPLETED);
+			cashTx.setComment(comment);
+			cashTx.setLastUpdatedTimeinMilli(Calendar.getInstance().getTimeInMillis());
+			if(!(userId.equals(cashTx.getUserId()))) {
+				throw new PaymentException("cash txId is invalid, user details not matching");
+			}
+			cashTxRepo.save(cashTx);
+		}else {
+			throw new PaymentException("cash txId is invalid, no transcation with this request exits");
+		}
+		log.info("Cash is transfered to user account by admin : " + adminId + "   for transaction : " + txId);
+	}
+	
+	public List<CashTx> getAllCashWithdrawalRequest(String userId){
+		return cashTxRepo.findByTxTypeAndUserId(TransactionType.WITHDRAWAL.name(), userId);
 	}
 	
 	private AccountDetails getAccountDeatils(String userId, String userEmail) throws PaymentException {
