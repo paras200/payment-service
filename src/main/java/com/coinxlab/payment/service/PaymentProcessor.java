@@ -120,7 +120,7 @@ public class PaymentProcessor {
 	}
 	
 	@Transactional
-	public synchronized void withdraw(String userId, String userEmail, Double amount ) throws PaymentException{
+	public synchronized Integer withdraw(String userId, String userEmail, Double amount ) throws PaymentException{
 		//validate balance
 		AccountDetails ad = getAccountDeatils(userId, userEmail);
 		if (ad.getAmount() < amount) {
@@ -138,10 +138,12 @@ public class PaymentProcessor {
 
 		System.out.println("Trasaction saved .. now update account balance");
 
-		// add deposit amount
+		// add balance amount
 		ad.setAmount(ad.getAmount() - amount);
 		ad.setLastTxId(pd.getId());
 		accountRepo.save(ad);
+		
+		return pd.getId();
 	}
 	
 	@Transactional
@@ -183,13 +185,14 @@ public class PaymentProcessor {
 		return getAccountDeatils(userId,null);
 	}
 	
-	public void saveCashWithdrawalRequest(String userId, Double creditAmt , Double cashAmt, String ccy) {
+	public void saveCashWithdrawalRequest(String userId, Double creditAmt , Double cashAmt, String ccy, Integer txId) {
 		CashTx cashTx = new CashTx();
 		cashTx.setCashAmt(cashAmt);
 		cashTx.setCreditAmt(creditAmt);
 		cashTx.setUserId(userId);
 		cashTx.setTxType(TransactionType.WITHDRAWAL.name());
 		cashTx.setCcy(ccy);
+		cashTx.setTxId(txId);
 		cashTxRepo.save(cashTx);
 		log.info("Cash withdrawal request has noted " + cashTx);
 	}

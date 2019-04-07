@@ -3,6 +3,7 @@ package com.coinxlab.payment.model;
 import java.util.Calendar;
 import java.util.Date;
 
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -10,6 +11,7 @@ import javax.persistence.Id;
 import org.springframework.data.redis.core.index.Indexed;
 import org.springframework.lang.NonNull;
 
+@Entity
 public class CashTx {
 
 	public static String IN_PROGRESS ="IN_PROGRESS";
@@ -30,6 +32,8 @@ public class CashTx {
 	
 	@NonNull
 	private String txType;
+	
+	private Integer txId;
 	
 	@Indexed
 	private Date createdAt = Calendar.getInstance().getTime();
@@ -124,6 +128,14 @@ public class CashTx {
 
 	public void setStatus(String status) {
 		this.status = status;
+	}
+	
+	public Integer getTxId() {
+		return txId;
+	}
+
+	public void setTxId(Integer txId) {
+		this.txId = txId;
 	}
 
 	@Override

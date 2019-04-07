@@ -3,7 +3,6 @@ package com.coinxlab.payment.repos;
 import java.util.List;
 
 import org.springframework.data.repository.CrudRepository;
-
 import com.coinxlab.payment.model.CashTx;
 
 public interface CashTxRepository extends CrudRepository<CashTx, Long> {

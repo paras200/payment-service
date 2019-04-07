@@ -120,10 +120,10 @@ public class PaymentController {
 	
 	@PostMapping(path="/withdraw") 
 	public synchronized @ResponseBody Result withdraw (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount , @RequestParam Double cashAmount, @RequestParam String ccy) throws PaymentException {		
-		paymentProcessor.withdraw(userId, userEmail, amount);
+		Integer txId = paymentProcessor.withdraw(userId, userEmail, amount);
 		log.info("withdrawal completed by userId : " + userId);
 		emailClient.sendWithdrawalConfirmation(userEmail, amount);
-		paymentProcessor.saveCashWithdrawalRequest(userId, amount, cashAmount, ccy);
+		paymentProcessor.saveCashWithdrawalRequest(userId, amount, cashAmount, ccy, txId);
 		return new Result(Result.STATUS_SUCCESS);
 	}
 	
