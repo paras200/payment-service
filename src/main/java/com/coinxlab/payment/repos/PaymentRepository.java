@@ -17,4 +17,7 @@ public interface PaymentRepository extends CrudRepository<PaymentDetails, Long> 
 	
     @Query("SELECT pd FROM PaymentDetails pd WHERE pd.sourceUserId=:userId or pd.destUserId=:userId")
 	List<PaymentDetails> findAllTxsByUserId(@Param("userId") String userId);
+    
+    @Query("SELECT SUM(pd.amount) from PaymentDetails pd")
+    Long getTotalCreditTransfer();
 }

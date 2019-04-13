@@ -1,5 +1,8 @@
 package com.coinxlab.payment.model;
 
+import java.util.Calendar;
+import java.util.Date;
+
 public class DirectDeposit {
 	
 	public static String STATUS_INPROGRESS = "INPROGRESS";
@@ -16,6 +19,9 @@ public class DirectDeposit {
 	private String comments;
 	private String status;
 	private String ccy;
+	private String modeoftransfer;
+	private Double fxRate;
+	private Date createdDate = Calendar.getInstance().getTime();
 	
 	public Integer getId() {
 		return id;
@@ -77,5 +83,24 @@ public class DirectDeposit {
 	public void setCcy(String ccy) {
 		this.ccy = ccy;
 	}
+	public String getModeoftransfer() {
+		return modeoftransfer;
+	}
+	public void setModeoftransfer(String modeoftransfer) {
+		this.modeoftransfer = modeoftransfer;
+	}
+	public Double getFxRate() {
+		return fxRate;
+	}
+	public void setFxRate(Double fxRate) {
+		this.fxRate = fxRate;
+	}
+	public Date getCreatedDate() {
+		return createdDate;
+	}
+	public void setCreatedDate(Date createdDate) {
+		this.createdDate = createdDate;
+	}
+	
 	
 }

@@ -7,6 +7,8 @@ import java.util.Optional;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
@@ -62,7 +64,7 @@ public class PaymentController {
 			, @RequestParam String destUserEmail, @RequestParam Double amount) throws PaymentException {*/		
 
 	@PostMapping(path="/addTransaction") 
-	public @ResponseBody PaymentDetails addTransaction (@RequestBody PaymentDetails pd) throws PaymentException {
+	public @ResponseBody PaymentDetails addTransaction (@RequestBody PaymentDetails pd ) throws PaymentException {
 		try {
 			validate(pd);
 			pd.setTxType(TransactionType.TRANSFER.name());
@@ -220,5 +222,18 @@ public class PaymentController {
 		}
 		
 		return new Result("SUCCESS");
+	}
+	
+	@GetMapping(value="/total-credits")
+	public String getTotalCreditExchanged() throws PaymentException {
+		JSONObject jsonObject = new JSONObject();
+		try {
+			jsonObject.put("credit-amount", paymentRepos.getTotalCreditTransfer());
+			
+		} catch (JSONException e) {
+			throw new PaymentException("failed to create credit data. ",e);
+		}
+		
+		return jsonObject.toString();
 	}
 }
