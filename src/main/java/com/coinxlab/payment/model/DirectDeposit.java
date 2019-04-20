@@ -3,25 +3,48 @@ package com.coinxlab.payment.model;
 import java.util.Calendar;
 import java.util.Date;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+import org.springframework.data.redis.core.index.Indexed;
+
+@Entity
 public class DirectDeposit {
 	
 	public static String STATUS_INPROGRESS = "INPROGRESS";
 	public static String STATUS_COMPLETED = "COMPLETED";
 	
+	@Id
+    @GeneratedValue(strategy=GenerationType.AUTO)
 	private Integer id;
+	
+	private Integer ccyTxId;
 	
 	private String userId;
 	private String userEmail;
 	private double amount;
 	private double credit;
 	private double txFee;
+	
+	@Column(unique=true)
 	private String txReference;
+	
 	private String comments;
-	private String status;
+	
+	@Indexed
+	private String status = STATUS_INPROGRESS;
 	private String ccy;
 	private String modeoftransfer;
 	private Double fxRate;
 	private Date createdDate = Calendar.getInstance().getTime();
+	private Date lastUpdatedAt = new Date();
+	private Date transactionDate;
+	private double bankAcBalance;;
+	
+	private String updatedBy;
 	
 	public Integer getId() {
 		return id;
@@ -101,6 +124,35 @@ public class DirectDeposit {
 	public void setCreatedDate(Date createdDate) {
 		this.createdDate = createdDate;
 	}
-	
+	public Date getTransactionDate() {
+		return transactionDate;
+	}
+	public void setTransactionDate(Date transactionDate) {
+		this.transactionDate = transactionDate;
+	}
+	public Integer getCcyTxId() {
+		return ccyTxId;
+	}
+	public void setCcyTxId(Integer ccyTxId) {
+		this.ccyTxId = ccyTxId;
+	}
+	public double getBankAcBalance() {
+		return bankAcBalance;
+	}
+	public void setBankAcBalance(double bankAcBalance) {
+		this.bankAcBalance = bankAcBalance;
+	}
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+	public Date getLastUpdatedAt() {
+		return lastUpdatedAt;
+	}
+	public void setLastUpdatedAt(Date lastUpdatedAt) {
+		this.lastUpdatedAt = lastUpdatedAt;
+	}
 	
 }

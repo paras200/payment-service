@@ -6,16 +6,22 @@ import java.io.FileReader;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import com.coinxlab.common.NumberUtil;
 import com.coinxlab.payment.model.RateCard;
 
 public class JasonParser {
 
-	public static void main(String args[])
+	public static void main(String args[]) throws ParseException
     {
 		
 		System.out.println(NumberUtil.roundDouble(1923.5667));
+		JSONParser pas = new JSONParser();
+		String response = "{\"USD_INR\":69.407501}";
+		JSONObject jObject = (JSONObject)pas.parse(response );
+		Double	 value = (Double)jObject.get("USD_INR");
+		System.out.println(value);
 		
 		RateCard rc = new RateCard(100f);
 		rc.getFxRates();

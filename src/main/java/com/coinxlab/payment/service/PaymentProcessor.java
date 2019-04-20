@@ -15,17 +15,22 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.coinxlab.common.NumberUtil;
+import com.coinxlab.common.Result;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.AccountDetails;
 import com.coinxlab.payment.model.CashTx;
 import com.coinxlab.payment.model.CcyTxDetail;
+import com.coinxlab.payment.model.DirectDeposit;
 import com.coinxlab.payment.model.PaymentDetails;
 import com.coinxlab.payment.model.TxDetails;
 import com.coinxlab.payment.repos.AccountRepository;
 import com.coinxlab.payment.repos.CashTxRepository;
 import com.coinxlab.payment.repos.CcyTransactionRepository;
+import com.coinxlab.payment.repos.DirectDepositRepository;
 import com.coinxlab.payment.repos.PaymentRepository;
 import com.coinxlab.payment.repos.TransactionRepository;
 import com.coinxlab.payment.utils.AppConstants;
@@ -56,6 +61,9 @@ public class PaymentProcessor {
 	
 	@Autowired
 	private CashTxRepository cashTxRepo;
+	
+	@Autowired
+	private DirectDepositRepository ddRepos;
 	
 	@PostConstruct
 	public void init(){
@@ -168,8 +176,10 @@ public class PaymentProcessor {
 	}
 	
 	@Transactional
-	public synchronized void validatedDirectDeposit (CcyTxDetail ddTx) throws PaymentException {	
+	public synchronized void validatedDirectDeposit (CcyTxDetail ddTx, DirectDeposit directDeposit) throws PaymentException {	
 		//directDeposit = directDepositRepo.save(directDeposit);
+		ddRepos.save(directDeposit);
+		
 		ddTx = ccyTxRepo.save(ddTx);
 		log.info("deposit deposit tx validated for : " + ddTx.getUserEmail() + "   tx ref :  " + ddTx.getTxReference());
 		log.info("add credits to user deposit");
@@ -181,6 +191,16 @@ public class PaymentProcessor {
 		}
 	}
 	
+	@Transactional
+	public DirectDeposit saveDirectDepositRequest (DirectDeposit directDeposit , CcyTxDetail ccyTxDetail) throws PaymentException {	
+		ccyTxDetail = ccyTxRepo.save(ccyTxDetail);
+		log.info("deposit deposit details sent by : " + ccyTxDetail.getUserId() + "   email " + ccyTxDetail.getUserEmail());
+		directDeposit.setCcyTxId(ccyTxDetail.getId());
+		
+		directDeposit = ddRepos.save(directDeposit);
+		log.info("direct deposit requets saved");
+		return directDeposit;
+	}
 	public AccountDetails getAccountDeatils(String userId) throws PaymentException {
 		return getAccountDeatils(userId,null);
 	}

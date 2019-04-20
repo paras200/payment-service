@@ -14,14 +14,14 @@ import jdk.nashorn.internal.ir.annotations.Ignore;
 //@SpringBootTest
 public class FxRateTest {
 	
-	//@Autowired
+//	@Autowired
 	private FxRateManager fxRateManager;
 	
-	@Ignore
-	@Test
+//	@Ignore
+//	@Test
 	public void fxRateTest() throws PaymentException {
-		//float inrRate = fxRateManager.getINRRate();
-		System.out.println(10);
+//		float inrRate = fxRateManager.getINRRate();
+//		System.out.println(10);
 	}
 	
 	

@@ -4,11 +4,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
@@ -31,6 +30,7 @@ import com.coinxlab.payment.model.DirectDeposit;
 import com.coinxlab.payment.model.PaymentDetails;
 import com.coinxlab.payment.model.RateCard;
 import com.coinxlab.payment.repos.CcyTransactionRepository;
+import com.coinxlab.payment.repos.DirectDepositRepository;
 import com.coinxlab.payment.repos.PaymentRepository;
 import com.coinxlab.payment.service.PaymentProcessor;
 import com.coinxlab.payment.utils.TransactionType;
@@ -58,28 +58,15 @@ public class PaymentController {
 	@Autowired
 	private EmailClient emailClient;
 	
+	@Autowired
+	private DirectDepositRepository ddRepos;
+	
 	
 	/*@PostMapping(path="/addTransaction") 
 	public @ResponseBody String addTransaction (@RequestParam String srcUserId , @RequestParam String srcUserEmail, @RequestParam String destUserId
 			, @RequestParam String destUserEmail, @RequestParam Double amount) throws PaymentException {*/		
 
-	@PostMapping(path="/addTransaction") 
-	public @ResponseBody PaymentDetails addTransaction (@RequestBody PaymentDetails pd ) throws PaymentException {
-		try {
-			validate(pd);
-			pd.setTxType(TransactionType.TRANSFER.name());
-			pd.setPaymentSystem("INTERNAL");
-			pd = paymentProcessor.addTransactions(pd);
-			log.info("Transfer completed for :" + pd);
-			emailClient.sendTransactionConfirmation(pd);
-		}catch(PaymentException ex) {
-			log.error("creadit transactions failed : " + pd);
-			emailClient.sendTransactionFailuer(pd);
-			throw ex;
-		}
-		
-		return pd;
-	}
+	
 	
 
 	@GetMapping(path="/allTx")
@@ -106,12 +93,7 @@ public class PaymentController {
 		return ccyTxRepo.findByUserId(userId);
 	}
 	
-	@PostMapping(path="/deposit") 
-	public synchronized @ResponseBody Result deposit (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount) throws PaymentException {		
-		paymentProcessor.deposit(userId, userEmail, amount);
-		log.info("deposit completed by userId : " + userId);
-		return new Result("SUCCESS");
-	}
+	
 	
 	@GetMapping(path="/accountBal")
 	public @ResponseBody AccountDetails getAccountBalance(@RequestParam String userId) throws PaymentException {
@@ -136,17 +118,36 @@ public class PaymentController {
 	}
 	
 	@GetMapping(path="/get-cash-withdrawal-list") 
-	public synchronized @ResponseBody List<CashTx> withdraw (@RequestParam String userId ) throws PaymentException {		
+	public synchronized @ResponseBody List<CashTx> withdrawTxList (@RequestParam String userId ) throws PaymentException {		
 		
 		return paymentProcessor.getAllCashWithdrawalRequest(userId);
 	}
 	
-	private void validate(PaymentDetails pd) throws PaymentException {		
-		if(StringUtils.isEmpty(pd.getDestUserId()) || StringUtils.isEmpty(pd.getSourceUserId()) || StringUtils.isEmpty(pd.getAmount())){
-			log.error("key input are missing ... can't proceed with the transaction for : "+ pd);
-			throw new PaymentException("key input are missing ... can't proceed with the transaction");
+	@GetMapping(path="/get-all-cashtx-list") 
+	public synchronized @ResponseBody List<CashTx> getAllCashTxs (@RequestParam String userId ) throws PaymentException {		
+		
+		List<CashTx> withdrawalList = paymentProcessor.getAllCashWithdrawalRequest(userId);
+		List<CashTx> cashTxList = new ArrayList<>();
+		List<CcyTxDetail> depositList =  ccyTxRepo.findByUserId(userId);
+		for (CcyTxDetail ccyTxDetail : depositList) {
+			CashTx cashTx = new CashTx();
+			cashTx.setAdminId(ccyTxDetail.getUpdatedBy());
+			cashTx.setCashAmt(ccyTxDetail.getTxAmount());
+			cashTx.setCcy(ccyTxDetail.getTxCCY());
+			cashTx.setLastUpdatedTimeinMilli(ccyTxDetail.getLastUpdatedAt().getTime());
+			cashTx.setCreatedAt(ccyTxDetail.getCreatedAt());
+			cashTx.setStatus(ccyTxDetail.getStatus());
+			cashTx.setTxType(TransactionType.DEPOSIT.name());
+			cashTx.setTxId(ccyTxDetail.getId());
+			cashTx.setUserId(ccyTxDetail.getUserId());
+			
+			cashTxList.add(cashTx);
 		}
+		cashTxList.addAll(withdrawalList);
+		List<CashTx> sortedTxList =  cashTxList.stream().sorted((c1,c2) -> Long.compare(c1.getLastUpdatedTimeinMilli(), c2.getLastUpdatedTimeinMilli())).collect(Collectors.toList());
+		return sortedTxList;
 	}
+	
 	
 	@GetMapping(path="/credit-rate-card")
 	public @ResponseBody RateCard getRateList() {
@@ -173,39 +174,58 @@ public class PaymentController {
 		ccyTxDetail.setUserEmail(directDeposit.getUserEmail());
 		ccyTxDetail.setUserId(directDeposit.getUserId());
 		ccyTxDetail.setTotalAmount(directDeposit.getAmount());
+		ccyTxDetail.setTxAmount(directDeposit.getAmount());
 		ccyTxDetail.setTxCCY(directDeposit.getCcy());
 		ccyTxDetail.setTxCharge(directDeposit.getTxFee());
 		ccyTxDetail.setTxReference(directDeposit.getTxReference());
+		ccyTxDetail.setFxRate(directDeposit.getFxRate());
+		ccyTxDetail.setTransactionDate(directDeposit.getTransactionDate());
 		
+		directDeposit.setStatus(DirectDeposit.STATUS_INPROGRESS);
 		//directDeposit = directDepositRepo.save(directDeposit);
-		ccyTxDetail = ccyTxRepo.save(ccyTxDetail);
-		log.info("deposit deposit details sent by : " + ccyTxDetail.getUserId() + "   email " + ccyTxDetail.getUserEmail());
+		paymentProcessor.saveDirectDepositRequest(directDeposit, ccyTxDetail);
+		
 		return new Result("SUCCESS");
 	}
 	
-	@GetMapping(path="/get-direct-deposit-list")
-	public @ResponseBody List<DirectDeposit> getDirectDepositTxs(@RequestParam String userEmail) throws PaymentException {
-		List<DirectDeposit> depositList = new ArrayList<>();
-		List<CcyTxDetail> txList = ccyTxRepo.findByUserEmailAndPaymentSystem(userEmail, CcyTxDetail.SYSTEM_DD);
-		for (CcyTxDetail ccyTxDetail : txList) {
-			DirectDeposit dd = new DirectDeposit();
-			dd.setAmount(ccyTxDetail.getTotalAmount());
-			dd.setCredit(ccyTxDetail.getCreditAmount());
-			dd.setStatus(ccyTxDetail.getStatus());
-			dd.setUserEmail(ccyTxDetail.getUserEmail());
-			dd.setCcy(ccyTxDetail.getTxCCY());
-			dd.setTxFee(ccyTxDetail.getTxCharge());
-			dd.setUserId(ccyTxDetail.getUserId());
-			dd.setId(ccyTxDetail.getId());
-			depositList.add(dd);
-		}
-		log.info("direct deposit tx list for " + userEmail + " is returned");
+	@GetMapping(value="/get-direct-deposit-list")
+	public @ResponseBody List<DirectDeposit> getDirectDepositTxs(@RequestParam String userId) throws PaymentException {
+		List<DirectDeposit> depositList = ddRepos.findByUserId(userId);
+		
+		log.info("direct deposit tx list for " + userId + " is returned");
 		return depositList;
 	}
 	
+	@GetMapping(value="/get-all-direct-deposit")
+	public @ResponseBody List<DirectDeposit> getAllDirectDeposits() throws PaymentException {
+		List<DirectDeposit> ddList = new ArrayList<>();
+		Iterable<DirectDeposit> ddItr = ddRepos.findAll();
+		ddItr.forEach(ddList::add);;
+		
+		return ddList;
+	}
+	
+	@GetMapping(value="/get-inprogress-direct-deposit")
+	public @ResponseBody List<DirectDeposit> getDirectDepositsByStatus() throws PaymentException {
+		List<DirectDeposit> ddList = new ArrayList<>();
+		Iterable<DirectDeposit> ddItr = ddRepos.findByStatus(DirectDeposit.STATUS_INPROGRESS);
+		ddItr.forEach(ddList::add);;
+		
+		return ddList;
+	}
+	
+	
 	@PostMapping(path="/confirm-direct-deposit-payment") 
 	public synchronized @ResponseBody Result validatedDirectDeposit (@RequestParam Long id ,  @RequestParam String userId, @RequestParam String loginUserEmail) throws PaymentException {	
-		Optional<CcyTxDetail> txDetailList = ccyTxRepo.findById(id);
+		Optional<DirectDeposit> dd = ddRepos.findById(id);
+		DirectDeposit directDeposit = null;
+		if(dd.isPresent()){
+			directDeposit = dd.get();
+		}else {
+			log.error("id is not corret , id supplied is : " + id);
+			throw new PaymentException("id is not corret , id supplied is : " + id);
+		}
+		Optional<CcyTxDetail> txDetailList = ccyTxRepo.findById(Long.valueOf(directDeposit.getCcyTxId()) );
 		if(txDetailList.isPresent()) {
 			CcyTxDetail ddTx =  txDetailList.get();
 			if(!ddTx.getUserId().equalsIgnoreCase(userId)) {
@@ -215,25 +235,30 @@ public class PaymentController {
 			ddTx.setStatus(DirectDeposit.STATUS_COMPLETED);
 			ddTx.setUpdatedBy(loginUserEmail);
 			ddTx.setLastUpdatedAt(new Date());
-			paymentProcessor.validatedDirectDeposit(ddTx);
+			
+			directDeposit.setStatus(DirectDeposit.STATUS_COMPLETED);
+			directDeposit.setLastUpdatedAt(new Date());
+			paymentProcessor.validatedDirectDeposit(ddTx, directDeposit);
 		}else {
 			log.error("id is not corret , id supplied is : " + id);
 			throw new PaymentException("id is not corret , id supplied is : " + id);
 		}
-		
+		log.info("Transaction is confimed for user : " + userId);
 		return new Result("SUCCESS");
 	}
 	
 	@GetMapping(value="/total-credits")
-	public String getTotalCreditExchanged() throws PaymentException {
-		JSONObject jsonObject = new JSONObject();
+	public Result getTotalCreditExchanged() throws PaymentException {
+		/*JSONObject jsonObject = new JSONObject();
 		try {
 			jsonObject.put("credit-amount", paymentRepos.getTotalCreditTransfer());
 			
 		} catch (JSONException e) {
 			throw new PaymentException("failed to create credit data. ",e);
 		}
-		
-		return jsonObject.toString();
+		*/
+		//return jsonObject.toString();
+		Result rs = new Result(paymentRepos.getTotalCreditTransfer()+"");
+		return rs;
 	}
 }

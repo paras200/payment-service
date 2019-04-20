@@ -40,8 +40,8 @@ public class CcyTxDetail {
 	private String comments;
 	private Date lastUpdatedAt = new Date();
 	private String updatedBy;
-	private String modeoftransfer;
 	private Double fxRate;
+	private Date transactionDate;
 
 	public Integer getId() {
 		return id;
@@ -188,14 +188,6 @@ public class CcyTxDetail {
 		this.updatedBy = updatedBy;
 	}
 
-	public String getModeoftransfer() {
-		return modeoftransfer;
-	}
-
-	public void setModeoftransfer(String modeoftransfer) {
-		this.modeoftransfer = modeoftransfer;
-	}
-
 	public Double getFxRate() {
 		return fxRate;
 	}
@@ -203,6 +195,13 @@ public class CcyTxDetail {
 	public void setFxRate(Double fxRate) {
 		this.fxRate = fxRate;
 	}
-	
+
+	public Date getTransactionDate() {
+		return transactionDate;
+	}
+
+	public void setTransactionDate(Date transactionDate) {
+		this.transactionDate = transactionDate;
+	}
 	
 }

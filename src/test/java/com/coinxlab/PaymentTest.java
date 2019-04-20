@@ -18,7 +18,7 @@ public class PaymentTest {
 	
 	//@Test
 	public void testCreditTranferSum() throws PaymentException {
-	 String credit =	controller.getTotalCreditExchanged();
-	 System.out.println("credit amt : " + credit);
+	 //String credit =	controller.getTotalCreditExchanged();
+	 //System.out.println("credit amt : " + credit);
 	}
 }
