@@ -80,7 +80,7 @@ public class PaypalController {
         
         String userId = (String) txdetails.get("userId");
         String userEmail = (String) txdetails.get("userEmail");
-        String credit = (String) txdetails.get("credits");
+        String credit = (String) txdetails.get("credit");
         Double creditValue = 0.0;
         if(credit != null) {
         	 creditValue = Double.valueOf(credit);
@@ -126,8 +126,6 @@ public class PaypalController {
         log.info("Paypal transaction details are saved");
         // make deposit if status is approved
         if(PaypalStatus.approved.name().equalsIgnoreCase(state) || PaypalStatus.completed.name().equalsIgnoreCase(state)) {
-        	log.info("save of credit deposit is in progress...");
-        	emailClient.sendPaymentConfirmation(creditValue, userEmail);
         	//validate required paratements
         	if(creditValue <=0.01 || userEmail == null || userId == null) {
         		//TODO don't throw error as paypal tx is success.
@@ -135,6 +133,8 @@ public class PaypalController {
         		emailClient.sendInternalError("Credit deposit failed , key input is missing. " + "credit , userEmail & userId is mandatory :  userId =" + userId + "  credit  = " + credit);
         		throw new PaymentException("credit , userEmail & userId is mandatory :  userId =" + userId + "  credit  = " + credit);
         	}
+        	log.info("save of credit deposit is in progress...");
+        	emailClient.sendPaymentConfirmation(creditValue, userEmail);
         	paymentProcessor.deposit(userId, userEmail, creditValue);
         }else {
         	emailClient.sendInternalError("Paypal payment issue, status is : " + state);

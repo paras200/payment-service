@@ -10,7 +10,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -103,10 +102,11 @@ public class PaymentController {
 	}
 	
 	@PostMapping(path="/withdraw") 
-	public synchronized @ResponseBody Result withdraw (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount , @RequestParam Double cashAmount, @RequestParam String ccy) throws PaymentException {		
+	public synchronized @ResponseBody Result withdraw (@RequestParam String userId , @RequestParam String userEmail, @RequestParam Double amount , @RequestParam String ccy) throws PaymentException {		
 		Integer txId = paymentProcessor.withdraw(userId, userEmail, amount);
 		log.info("withdrawal completed by userId : " + userId);
 		emailClient.sendWithdrawalConfirmation(userEmail, amount);
+		Double cashAmount = 0.0;// we can apply brokearge and FX charge here , for phase 1, will do that calculation manually
 		paymentProcessor.saveCashWithdrawalRequest(userId, amount, cashAmount, ccy, txId);
 		return new Result(Result.STATUS_SUCCESS);
 	}
@@ -216,18 +216,15 @@ public class PaymentController {
 	
 	
 	@PostMapping(path="/confirm-direct-deposit-payment") 
-	public synchronized @ResponseBody Result validatedDirectDeposit (@RequestParam Long id ,  @RequestParam String userId, @RequestParam String loginUserEmail) throws PaymentException {	
-		Optional<DirectDeposit> dd = ddRepos.findById(id);
-		DirectDeposit directDeposit = null;
-		if(dd.isPresent()){
-			directDeposit = dd.get();
-		}else {
+	public synchronized @ResponseBody Result validatedDirectDeposit (@RequestParam Integer id ,  @RequestParam String userId, @RequestParam String loginUserEmail) throws PaymentException {	
+		DirectDeposit directDeposit = ddRepos.findById(id);
+		
+		if(directDeposit == null){
 			log.error("id is not corret , id supplied is : " + id);
 			throw new PaymentException("id is not corret , id supplied is : " + id);
 		}
-		Optional<CcyTxDetail> txDetailList = ccyTxRepo.findById(Long.valueOf(directDeposit.getCcyTxId()) );
-		if(txDetailList.isPresent()) {
-			CcyTxDetail ddTx =  txDetailList.get();
+		CcyTxDetail ddTx = ccyTxRepo.findById(directDeposit.getCcyTxId() );
+		if(ddTx != null) {
 			if(!ddTx.getUserId().equalsIgnoreCase(userId)) {
 				log.info("validation failed ... user id is not matching , userId as per txTable : "+ ddTx.getUserId() + "  & supplied userid is : " + userId);
 				throw new PaymentException("validation failed ... user id is not matching , userId as per txTable : "+ ddTx.getUserId() + "  & supplied userid is : " + userId);
@@ -241,7 +238,7 @@ public class PaymentController {
 			paymentProcessor.validatedDirectDeposit(ddTx, directDeposit);
 		}else {
 			log.error("id is not corret , id supplied is : " + id);
-			throw new PaymentException("id is not corret , id supplied is : " + id);
+			throw new PaymentException("ccyTx Id  is not corret , id supplied is : " + id);
 		}
 		log.info("Transaction is confimed for user : " + userId);
 		return new Result("SUCCESS");

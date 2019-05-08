@@ -12,4 +12,6 @@ public interface CcyTransactionRepository extends CrudRepository<CcyTxDetail, Lo
 	List<CcyTxDetail> findByUserEmail(String email);
 	List<CcyTxDetail> findByUserEmailAndPaymentSystem(String email, String paymentSystem);
 	
+	CcyTxDetail findById(Integer id);
+	
 }

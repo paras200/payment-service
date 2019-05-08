@@ -11,4 +11,6 @@ public interface DirectDepositRepository extends CrudRepository<DirectDeposit, L
 	List<DirectDeposit> findByUserId(String userId);
 	
 	List<DirectDeposit> findByStatus(String status);
+	
+	DirectDeposit findById(Integer id);
 }

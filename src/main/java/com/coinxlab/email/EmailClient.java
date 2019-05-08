@@ -38,11 +38,13 @@ public class EmailClient {
 		customEmailUrl = emailServerUrl + "/sendMail"; // TODO change
 	}
 	
+	//TDOO uncomment send email
 	private void sendEmailByTemplate(EmailBody emailBody) {
         RestTemplate restTemplate = new RestTemplate();
 		restTemplate.postForEntity(templateBasedUrl, emailBody, String.class);
 	}
 	
+	@Async
 	public void sendPaymentFailuer(EmailBody emailBody) {
         RestTemplate restTemplate = new RestTemplate();
 		restTemplate.postForEntity(customEmailUrl, emailBody, String.class);
@@ -121,7 +123,6 @@ public class EmailClient {
 		}catch(Exception ex) {
 			log.error("Error sending email ", ex);
 		}
-
 	}
 
 	@Async
