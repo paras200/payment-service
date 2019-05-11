@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.coinxlab.common.Result;
 import com.coinxlab.email.EmailClient;
 import com.coinxlab.fx.FxRateManager;
+import com.coinxlab.notification.FCMNotification;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.AccountDetails;
 import com.coinxlab.payment.model.CashTx;
@@ -59,6 +60,9 @@ public class PaymentController {
 	
 	@Autowired
 	private DirectDepositRepository ddRepos;
+	
+	@Autowired
+	private FCMNotification fcmNotification;
 	
 	
 	/*@PostMapping(path="/addTransaction") 
@@ -185,6 +189,8 @@ public class PaymentController {
 		//directDeposit = directDepositRepo.save(directDeposit);
 		paymentProcessor.saveDirectDepositRequest(directDeposit, ccyTxDetail);
 		
+		emailClient.sendDirectDepositRequest(directDeposit);
+		fcmNotification.sendDirectDepositRequest(directDeposit);
 		return new Result("SUCCESS");
 	}
 	
@@ -241,6 +247,7 @@ public class PaymentController {
 			throw new PaymentException("ccyTx Id  is not corret , id supplied is : " + id);
 		}
 		log.info("Transaction is confimed for user : " + userId);
+		fcmNotification.sendDirectDepositConfirmation(directDeposit);
 		return new Result("SUCCESS");
 	}
 	

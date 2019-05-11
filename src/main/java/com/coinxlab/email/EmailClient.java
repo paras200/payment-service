@@ -1,5 +1,7 @@
 package com.coinxlab.email;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.coinxlab.common.NumberUtil;
+import com.coinxlab.payment.model.DirectDeposit;
 import com.coinxlab.payment.model.PaymentDetails;
 import com.coinxlab.payment.utils.AppConstants;
 
@@ -30,6 +33,9 @@ public class EmailClient {
 	
 	private String templateBasedUrl;
 	private String customEmailUrl;
+	
+	@Value("${email.admins}")
+	private String adminEmails;
 	
 	
 	@PostConstruct
@@ -123,6 +129,32 @@ public class EmailClient {
 		}catch(Exception ex) {
 			log.error("Error sending email ", ex);
 		}
+	}
+	
+	@Async
+	public void sendDirectDepositRequest(DirectDeposit directDeposit) {
+		try {
+	        RestTemplate restTemplate = new RestTemplate();
+	        EmailBody eb = new EmailBody();
+	        eb.setBody("Direct Deposit request came from user: " + directDeposit.getUserId() + "  for cash amount :" + directDeposit.getAmount() + "  & credit : " + directDeposit.getCredit() + ". \n Please review and approve the request");
+	        eb.setSubject("Direct Deposit Request from " + directDeposit.getUserId());
+	        eb.getToList().addAll(getAdminEmails());
+	       // eb.setToList(AppConstants.SYSTEM_EMAIL);
+	        log.info("sending email .... "  + eb);
+			restTemplate.postForEntity(customEmailUrl, eb, String.class);			
+		}catch(Exception ex) {
+			log.error("Error sending email ", ex);
+		}
+	}
+
+	private List<String> getAdminEmails() {
+		List<String> emailList = new ArrayList<>();
+		emailList.add(AppConstants.MYBUDDY_EMAIL);
+		if(adminEmails != null) {
+			String[] adEmails = adminEmails.split(",");
+			emailList.addAll(Arrays.asList(adEmails));
+		}
+		return emailList;
 	}
 
 	@Async
