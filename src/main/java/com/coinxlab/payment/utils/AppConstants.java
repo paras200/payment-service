@@ -10,4 +10,6 @@ public interface AppConstants {
 	
 	public static String MYBUDDY_EMAIL="mybuddypro@gmail.com";
 	
+	public static String PAYMENT_EMAIL="payments@mybuddypro.com";
+	
 }

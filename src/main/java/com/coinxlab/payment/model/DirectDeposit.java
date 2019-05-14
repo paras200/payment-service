@@ -23,7 +23,9 @@ public class DirectDeposit {
 	
 	private Integer ccyTxId;
 	
+	@Indexed
 	private String userId;
+	
 	private String userEmail;
 	private double amount;
 	private double credit;

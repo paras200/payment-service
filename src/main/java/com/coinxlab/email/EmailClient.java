@@ -122,7 +122,8 @@ public class EmailClient {
 	        EmailBody eb = new EmailBody();
 	        eb.setBody(body);
 	        eb.setSubject("Alert - Internal payment processing error");
-	        eb.getToList().add(AppConstants.MYBUDDY_EMAIL);
+	        eb.getToList().addAll(getAdminEmails());
+	        
 	       // eb.setToList(AppConstants.SYSTEM_EMAIL);
 	        log.info("sending email .... "  + eb);
 			restTemplate.postForEntity(customEmailUrl, eb, String.class);			

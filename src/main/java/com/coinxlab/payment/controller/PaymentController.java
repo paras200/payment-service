@@ -170,6 +170,7 @@ public class PaymentController {
 	
 	@PostMapping(path="/save-direct-deposit-txdetails") 
 	public @ResponseBody Result deposit (@RequestBody DirectDeposit directDeposit) throws PaymentException {	
+		if(directDeposit.getUserId() == null) throw new PaymentException("User Id can't be Null");
 		//directDeposit.setStatus(DirectDeposit.STATUS_INPROGRESS);
 		CcyTxDetail ccyTxDetail = new CcyTxDetail();
 		ccyTxDetail.setCreditAmount(directDeposit.getCredit());

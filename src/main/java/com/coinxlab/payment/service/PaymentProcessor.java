@@ -136,10 +136,10 @@ public class PaymentProcessor {
 		}
 
 		PaymentDetails pd = new PaymentDetails();
-		pd.setSourceUserId(AppConstants.SYSTEM_ID);
-		pd.setSourceUserEmail(AppConstants.SYSTEM_EMAIL);
-		pd.setDestUserId(userId);
-		pd.setDestUserEmail(userEmail);
+		pd.setSourceUserId(userId);
+		pd.setSourceUserEmail(userEmail);
+		pd.setDestUserId(AppConstants.SYSTEM_ID);
+		pd.setDestUserEmail(AppConstants.SYSTEM_EMAIL);
 		pd.setAmount(amount);
 		pd.setTxType(TransactionType.WITHDRAWAL.name());
 		pd = paymentRepos.save(pd);
