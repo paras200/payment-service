@@ -3,15 +3,14 @@
 /bin/
 /payment-app.log
 
-# Maven
-target/
-logs/
-*.log
-bin/
 
 # Eclipse
 .classpath
 .project
 .settings/
 
-*.class
+# Maven
+target/
+logs/
+*.log
+/bin/
