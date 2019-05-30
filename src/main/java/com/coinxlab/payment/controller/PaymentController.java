@@ -3,7 +3,6 @@ package com.coinxlab.payment.controller;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.logging.Log;
@@ -242,6 +241,7 @@ public class PaymentController {
 			
 			directDeposit.setStatus(DirectDeposit.STATUS_COMPLETED);
 			directDeposit.setLastUpdatedAt(new Date());
+			directDeposit.setUpdatedBy(loginUserEmail);
 			paymentProcessor.validatedDirectDeposit(ddTx, directDeposit);
 		}else {
 			log.error("id is not corret , id supplied is : " + id);
@@ -249,6 +249,41 @@ public class PaymentController {
 		}
 		log.info("Transaction is confimed for user : " + userId);
 		fcmNotification.sendDirectDepositConfirmation(directDeposit);
+		return new Result("SUCCESS");
+	}
+	
+	@PostMapping(path="/reject-direct-deposit-payment") 
+	public synchronized @ResponseBody Result rejectDirectDeposit (@RequestParam Integer id ,  @RequestParam String userId, @RequestParam String loginUserEmail) throws PaymentException {	
+		DirectDeposit directDeposit = ddRepos.findById(id);
+		
+		if(directDeposit == null){
+			log.error("id is not corret , id supplied is : " + id);
+			throw new PaymentException("id is not corret , id supplied is : " + id);
+		}
+		directDeposit.setStatus(DirectDeposit.STATUS_REJECTED);
+		directDeposit.setLastUpdatedAt(new Date());
+		directDeposit.setUpdatedBy(loginUserEmail);
+		
+		ddRepos.save(directDeposit);
+		
+		
+		CcyTxDetail ddTx = ccyTxRepo.findById(directDeposit.getCcyTxId() );
+		if(ddTx != null) {
+			if(!ddTx.getUserId().equalsIgnoreCase(userId)) {
+				log.info("validation failed ... user id is not matching , userId as per txTable : "+ ddTx.getUserId() + "  & supplied userid is : " + userId);
+				throw new PaymentException("validation failed ... user id is not matching , userId as per txTable : "+ ddTx.getUserId() + "  & supplied userid is : " + userId);
+			}
+			ddTx.setStatus(DirectDeposit.STATUS_REJECTED);
+			ddTx.setUpdatedBy(loginUserEmail);
+			ddTx.setLastUpdatedAt(new Date());
+			ccyTxRepo.save(ddTx);
+		
+		}else {
+			log.error("id is not corret , id supplied is : " + id);
+			//throw new PaymentException("ccyTx Id  is not corret , id supplied is : " + id);
+		}
+		log.info("Transaction is rejected for user : " + userId);
+		//fcmNotification.sendDirectDepositConfirmation(directDeposit);
 		return new Result("SUCCESS");
 	}
 	

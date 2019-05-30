@@ -16,6 +16,7 @@ public class DirectDeposit {
 	
 	public static String STATUS_INPROGRESS = "INPROGRESS";
 	public static String STATUS_COMPLETED = "COMPLETED";
+	public static String STATUS_REJECTED = "REJECTED";
 	
 	@Id
     @GeneratedValue(strategy=GenerationType.AUTO)
