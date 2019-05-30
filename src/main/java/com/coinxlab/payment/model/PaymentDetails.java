@@ -9,6 +9,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import org.springframework.data.redis.core.index.Indexed;
+
 import com.coinxlab.common.NumberUtil;
 
 @Entity
@@ -18,21 +20,31 @@ public class PaymentDetails {
     @GeneratedValue(strategy=GenerationType.AUTO)
 	private Integer id;
 	
+	@Indexed
 	@Column(name="sourceUserId") 
 	private String sourceUserId;
 	
 	private String sourceUserEmail;
+	
+	@Indexed
 	private String destUserId;
 	private String destUserEmail;
+	
+	@Indexed
 	private Double amount;
+	
 	private Double txCharge;
 	private String paymentSystem;
 	private String payReference;
+	
+	@Indexed
 	private String txType;
 	private String enrolId;
 	private Date date = Calendar.getInstance().getTime();
 	private String description;
+	
 	private String roundedAmount;
+	
 	private Double sourceAcBalance;
 	private Double destAcBalance;
 	

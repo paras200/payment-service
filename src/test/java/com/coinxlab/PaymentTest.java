@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.coinxlab.common.Result;
 import com.coinxlab.payment.controller.PaymentController;
 import com.coinxlab.payment.error.PaymentException;
 import com.coinxlab.payment.model.DirectDeposit;
@@ -19,7 +20,7 @@ public class PaymentTest {
 	
 	//@Test
 	public void testCreditTranferSum() throws PaymentException {
-	 //String credit =	controller.getTotalCreditExchanged();
+	// Result credit =	controller.getTotalCreditExchanged() ;
 	 //System.out.println("credit amt : " + credit);
 	}
 	

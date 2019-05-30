@@ -63,6 +63,8 @@ public class PaymentController {
 	@Autowired
 	private FCMNotification fcmNotification;
 	
+	private static Integer defaultBaseCredit = 154000 ;
+	
 	
 	/*@PostMapping(path="/addTransaction") 
 	public @ResponseBody String addTransaction (@RequestParam String srcUserId , @RequestParam String srcUserEmail, @RequestParam String destUserId
@@ -289,16 +291,14 @@ public class PaymentController {
 	
 	@GetMapping(value="/total-credits")
 	public Result getTotalCreditExchanged() throws PaymentException {
-		/*JSONObject jsonObject = new JSONObject();
+		Long creditTxAmt = 0L;
 		try {
-			jsonObject.put("credit-amount", paymentRepos.getTotalCreditTransfer());
-			
-		} catch (JSONException e) {
-			throw new PaymentException("failed to create credit data. ",e);
+			creditTxAmt = paymentRepos.getTotalCreditTransfer();
+		}catch(Exception ex) {
+			log.error("Failed to caluclate SUM for credit : ", ex);
 		}
-		*/
-		//return jsonObject.toString();
-		Result rs = new Result(paymentRepos.getTotalCreditTransfer()+"");
+		Integer totalCredit = defaultBaseCredit + creditTxAmt.intValue();
+		Result rs = new Result(totalCredit +"");
 		return rs;
 	}
 }
